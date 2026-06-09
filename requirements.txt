@@ -1,0 +1,11 @@
+openai
+langgraph
+langchain-openai
+langchain-mcp-adapters
+mcp[cli]
+streamlit
+python-dotenv
+scipy
+chromadb
+bandit
+httpx
