@@ -17,7 +17,7 @@ A single-agent AI coding assistant built with Python and the OpenAI API. This is
 
 ## Architecture
 
-![Baseline agent architecture](../screenshots/baseline%20coding%20agent.PNG)
+![Baseline agent architecture](screenshots/baseline%20coding%20agent.PNG)
 
 The flow is linear:
 
@@ -39,7 +39,7 @@ No branching. No agents talking to each other. No tools. No vector databases. Ju
 
 ## See it in action
 
-![Agent responding to a coding task](../screenshots/agentresponse.PNG)
+![Agent responding to a coding task](screenshots/agentresponse.PNG)
 
 The agent takes a plain-English coding task, calls GPT-4o, and prints the result directly in the terminal. No delays, no intermediate steps, no review loops.
 
@@ -59,7 +59,7 @@ Everything else comes in the multi-agent system built next.
 
 ## How it works
 
-![Agent source code](../screenshots/agent%20file.PNG)
+![Agent source code](screenshots/agent%20file.PNG)
 
 The core logic is three functions:
 
@@ -75,7 +75,7 @@ The system prompt is kept minimal on purpose. No security instructions. No struc
 
 Every session produces a structured log record:
 
-![JSONL session log](../screenshots/log.PNG)
+![JSONL session log](screenshots/log.PNG)
 
 ```json
 {
@@ -111,6 +111,8 @@ The schema is identical across both conditions in the experiment (baseline and m
 **1. Clone the repo and install dependencies**
 
 ```bash
+git clone https://github.com/seyiabello/gpt4o-coding-agent.git
+cd gpt4o-coding-agent
 pip install openai python-dotenv
 ```
 
