@@ -33,10 +33,14 @@ app = FastAPI(
     ),
 )
 
-# Allow the Next.js dev server (and production domain) to call the API.
-# FRONTEND_ORIGIN can be overridden in production via environment variable.
+# Allow the Next.js dev server and production domain(s) to call the API.
+# FRONTEND_ORIGIN accepts a comma-separated list so local + Vercel both work.
 _origins = [
-    os.environ.get("FRONTEND_ORIGIN", "http://localhost:3000"),
+    o.strip()
+    for o in os.environ.get(
+        "FRONTEND_ORIGIN", "http://localhost:3000"
+    ).split(",")
+    if o.strip()
 ]
 
 app.add_middleware(
