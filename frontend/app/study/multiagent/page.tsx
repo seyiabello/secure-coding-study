@@ -12,6 +12,7 @@ import {
   requestNextHint,
   requestSecurityHint,
   finalizeCode,
+  reviseCode,
   type Task,
   type AgentStateData,
   type ThreatEntry,
@@ -206,6 +207,22 @@ export default function MultiAgentPage() {
     );
   }
 
+  /* — revise code after review — */
+  async function handleRevise(newCode: string) {
+    setCode(newCode);
+    setApiError(null);
+    setProcessingPill(3);
+    setProcessingLabel("Re-running Code Reviewer on revised code…");
+    setUiStage("processing");
+    try {
+      const res = await reviseCode(threadId!, newCode);
+      applyState(res.state);
+    } catch (e) {
+      setApiError(e instanceof Error ? e.message : "Revision failed");
+      setUiStage("code_review");
+    }
+  }
+
   /* — next task — */
   function handleNextTask() {
     const next = taskIndex + 1;
@@ -369,7 +386,9 @@ export default function MultiAgentPage() {
             predictionAccuracy={agentState.prediction_accuracy ?? null}
             plan={agentState.plan ?? null}
             threats={threats}
+            code={code}
             onAcknowledge={handleReviewAcknowledge}
+            onRevise={handleRevise}
           />
         )}
 
@@ -1002,13 +1021,23 @@ function CodingStage({
 
 /* ── Code Review ─────────────────────────────────────────────────────────── */
 
-function CodeReview({ findings, predictionAccuracy, plan, threats, onAcknowledge }: {
+function CodeReview({ findings, predictionAccuracy, plan, threats, code, onAcknowledge, onRevise }: {
   findings: ReviewFinding[];
   predictionAccuracy: number | null;
   plan: NonNullable<AgentStateData["plan"]> | null;
   threats: ThreatEntry[];
+  code: string;
   onAcknowledge: () => void;
+  onRevise: (newCode: string) => void;
 }) {
+  const [isRevising, setIsRevising] = useState(false);
+  const [revisedCode, setRevisedCode] = useState(code);
+
+  function openRevise() {
+    setRevisedCode(code);
+    setIsRevising(true);
+  }
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
       {/* Collapsed references from earlier stages */}
@@ -1067,10 +1096,37 @@ function CodeReview({ findings, predictionAccuracy, plan, threats, onAcknowledge
         ))
       )}
 
-      <div style={{ display: "flex", justifyContent: "flex-end" }}>
-        <div style={{ width: "220px" }}>
-          <PrimaryButton variant="green" onClick={onAcknowledge}>Acknowledge and Continue</PrimaryButton>
+      {/* Inline code editor shown when participant chooses to revise */}
+      {isRevising && (
+        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+          <SectionLabel>Edit your code — findings are shown above for reference</SectionLabel>
+          <div style={{ borderRadius: "12px", overflow: "hidden", border: "1px solid #374151" }}>
+            <MonacoEditor
+              height="380px"
+              language="python"
+              value={revisedCode}
+              theme="vs-dark"
+              onChange={(val) => setRevisedCode(val ?? "")}
+              options={{ minimap: { enabled: false }, lineNumbers: "on", wordWrap: "on", scrollBeyondLastLine: false, fontSize: 13, padding: { top: 16, bottom: 16 } }}
+            />
+          </div>
         </div>
+      )}
+
+      <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+        {isRevising ? (
+          <>
+            <button onClick={() => setIsRevising(false)} style={ghostBtnStyle}>Cancel</button>
+            <PrimaryButton onClick={() => onRevise(revisedCode)}>Re-submit for Review</PrimaryButton>
+          </>
+        ) : (
+          <>
+            {findings.length > 0 && (
+              <button onClick={openRevise} style={ghostBtnStyle}>Revise Code</button>
+            )}
+            <PrimaryButton variant="green" onClick={onAcknowledge}>Acknowledge and Continue</PrimaryButton>
+          </>
+        )}
       </div>
     </div>
   );

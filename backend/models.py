@@ -75,3 +75,7 @@ class FinalizeCodeRequest(BaseModel):
     hints_requested: list[dict]           # list of HintRecord (step_index, level, timestamp)
     time_in_coding_seconds: float
     pre_review_prediction: list[str] | None = None  # predicted CWE IDs
+
+
+class ReviseCodeRequest(BaseModel):
+    user_code: str

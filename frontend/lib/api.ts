@@ -193,3 +193,10 @@ export async function finalizeCode(
 ): Promise<{ state: AgentStateData }> {
   return apiPost(`/session/${threadId}/finalize`, payload);
 }
+
+export async function reviseCode(
+  threadId: string,
+  userCode: string
+): Promise<{ state: AgentStateData }> {
+  return apiPost(`/session/${threadId}/revise`, { user_code: userCode });
+}

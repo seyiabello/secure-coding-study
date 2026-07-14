@@ -16,6 +16,7 @@ from fastapi import APIRouter, HTTPException
 
 from models import (
     ResumeRequest,
+    ReviseCodeRequest,
     StartSessionRequest,
     StartSessionResponse,
     StateResponse,
@@ -59,6 +60,39 @@ def get_state(thread_id: str):
         state = get_current_state(config)
     except Exception as exc:
         raise HTTPException(status_code=404, detail=f"Session not found: {exc}")
+    return StateResponse(state=serialize_state(state))
+
+
+@router.post("/{thread_id}/revise", response_model=StateResponse)
+async def revise_code(thread_id: str, req: ReviseCodeRequest):
+    """
+    Rewind to code_generator and re-run Code Reviewer with updated code.
+
+    Called when the participant wants to fix their code after seeing review
+    findings. Rewinds the LangGraph checkpoint to code_generator's output slot,
+    updates user_code, clears the previous review results, then resumes so
+    code_reviewer runs again and pauses at the same HITL interrupt.
+    """
+    from multiagent.graph import get_current_state, graph
+    from utils import make_config, serialize_state
+
+    config = make_config(thread_id)
+    try:
+        graph.update_state(
+            config,
+            {
+                "user_code": req.user_code,
+                "review_findings": None,
+                "bandit_findings_review": None,
+                "review_decision": None,
+            },
+            as_node="code_generator",
+        )
+        await graph.ainvoke(None, config=config)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Revision failed: {exc}")
+
+    state = get_current_state(config)
     return StateResponse(state=serialize_state(state))
 
 
