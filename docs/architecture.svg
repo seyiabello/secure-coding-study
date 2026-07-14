@@ -1,0 +1,216 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 704" width="1100" height="704">
+  <defs>
+    <marker id="ah" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#4a5568"/>
+    </marker>
+    <marker id="ahd" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#b89a1e"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1100" height="704" fill="#ffffff"/>
+
+  <!-- Title bar -->
+  <rect x="0" y="0" width="1100" height="40" fill="#f0f4f8"/>
+  <line x1="0" y1="40" x2="1100" y2="40" stroke="#dde2e8"/>
+  <text x="550" y="15" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#1a202c" text-anchor="middle" dominant-baseline="middle">SECURE CODING STUDY — SYSTEM ARCHITECTURE</text>
+  <text x="550" y="30" font-family="Arial, sans-serif" font-size="10" fill="#718096" text-anchor="middle" dominant-baseline="middle">MSc COMM514 · University of Exeter · GPT-4o · LangGraph · ChromaDB · FastAPI · Next.js 15</text>
+
+  <!-- Section headers -->
+  <rect x="18" y="44" width="264" height="24" rx="3" fill="#f5f5f5" stroke="#b0b8c1"/>
+  <text x="150" y="56" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#4a5568" text-anchor="middle" dominant-baseline="middle">BASELINE (Control)</text>
+
+  <rect x="300" y="44" width="526" height="24" rx="3" fill="#dae8fc" stroke="#6c8ebf"/>
+  <text x="563" y="56" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#2d6099" text-anchor="middle" dominant-baseline="middle">MULTI-AGENT PIPELINE (Experimental)</text>
+
+  <text x="662" y="56" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#8a6914" text-anchor="middle" dominant-baseline="middle">Tool integrations</text>
+
+  <!-- Vertical divider -->
+  <line x1="292" y1="40" x2="292" y2="644" stroke="#dde2e8" stroke-width="1.5" stroke-dasharray="5,3"/>
+
+  <!-- ================================================================ -->
+  <!-- BASELINE PIPELINE                                                  -->
+  <!-- ================================================================ -->
+
+  <!-- Participant -->
+  <rect x="30" y="78" width="242" height="32" rx="4" fill="#f7fafc" stroke="#b0b8c1"/>
+  <text x="151" y="94" font-family="Arial, sans-serif" font-size="11" fill="#4a5568" text-anchor="middle" dominant-baseline="middle">Participant submits coding task</text>
+
+  <line x1="151" y1="110" x2="151" y2="127" stroke="#4a5568" stroke-width="1.5" marker-end="url(#ah)"/>
+
+  <!-- GPT-4o -->
+  <rect x="30" y="127" width="242" height="78" rx="4" fill="#dae8fc" stroke="#6c8ebf"/>
+  <text x="151" y="143" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#1a4b7a" text-anchor="middle" dominant-baseline="middle">GPT-4o — Direct API call</text>
+  <text x="151" y="159" font-family="Arial, sans-serif" font-size="10" fill="#4a6080" text-anchor="middle" dominant-baseline="middle">3-line system prompt</text>
+  <text x="151" y="173" font-family="Arial, sans-serif" font-size="10" fill="#4a6080" text-anchor="middle" dominant-baseline="middle">No security instructions · temp 0.2</text>
+  <text x="151" y="188" font-family="Arial, sans-serif" font-size="9" fill="#718096" text-anchor="middle" dominant-baseline="middle">One response · No review or iteration</text>
+
+  <line x1="151" y1="205" x2="151" y2="222" stroke="#4a5568" stroke-width="1.5" marker-end="url(#ah)"/>
+
+  <!-- Code returned -->
+  <rect x="30" y="222" width="242" height="32" rx="4" fill="#f7fafc" stroke="#b0b8c1"/>
+  <text x="151" y="238" font-family="Arial, sans-serif" font-size="11" fill="#4a5568" text-anchor="middle" dominant-baseline="middle">Code returned to participant</text>
+
+  <line x1="151" y1="254" x2="151" y2="271" stroke="#4a5568" stroke-width="1.5" marker-end="url(#ah)"/>
+
+  <!-- JSONL log baseline -->
+  <rect x="30" y="271" width="242" height="36" rx="4" fill="#f7fafc" stroke="#b0b8c1"/>
+  <text x="151" y="284" font-family="Arial, sans-serif" font-size="11" fill="#4a5568" text-anchor="middle" dominant-baseline="middle">Session logged (JSONL)</text>
+  <text x="151" y="298" font-family="Arial, sans-serif" font-size="9" fill="#a0aec0" text-anchor="middle" dominant-baseline="middle">condition: "baseline"</text>
+
+  <!-- ================================================================ -->
+  <!-- MULTI-AGENT PIPELINE                                               -->
+  <!-- ================================================================ -->
+
+  <!-- Participant -->
+  <rect x="308" y="78" width="234" height="32" rx="4" fill="#f7fafc" stroke="#b0b8c1"/>
+  <text x="425" y="94" font-family="Arial, sans-serif" font-size="11" fill="#4a5568" text-anchor="middle" dominant-baseline="middle">Participant submits coding task</text>
+
+  <line x1="425" y1="110" x2="425" y2="127" stroke="#4a5568" stroke-width="1.5" marker-end="url(#ah)"/>
+
+  <!-- 1. Planner -->
+  <rect x="308" y="127" width="234" height="52" rx="4" fill="#dae8fc" stroke="#6c8ebf"/>
+  <text x="425" y="143" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#1a4b7a" text-anchor="middle" dominant-baseline="middle">1. Planner</text>
+  <text x="425" y="158" font-family="Arial, sans-serif" font-size="10" fill="#4a6080" text-anchor="middle" dominant-baseline="middle">Steps · Scope · Security requirements</text>
+  <text x="425" y="171" font-family="Arial, sans-serif" font-size="9" fill="#718096" text-anchor="middle" dominant-baseline="middle">No RAG · No MCP</text>
+
+  <!-- Arrow + HITL 1 -->
+  <line x1="425" y1="179" x2="425" y2="215" stroke="#4a5568" stroke-width="1.5" marker-end="url(#ah)"/>
+  <rect x="320" y="187" width="210" height="18" rx="9" fill="#d5e8d4" stroke="#82b366"/>
+  <text x="425" y="196" font-family="Arial, sans-serif" font-size="9" font-weight="bold" fill="#276749" text-anchor="middle" dominant-baseline="middle">HITL · Participant approves plan</text>
+
+  <!-- 2. Threat Modeller -->
+  <rect x="308" y="215" width="234" height="54" rx="4" fill="#dae8fc" stroke="#6c8ebf"/>
+  <text x="425" y="231" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#1a4b7a" text-anchor="middle" dominant-baseline="middle">2. Threat Modeller</text>
+  <text x="425" y="246" font-family="Arial, sans-serif" font-size="10" fill="#4a6080" text-anchor="middle" dominant-baseline="middle">Task-specific threats from CWE corpus + live CVEs</text>
+  <text x="425" y="260" font-family="Arial, sans-serif" font-size="9" fill="#718096" text-anchor="middle" dominant-baseline="middle">RAG: CWE Top 25 · MCP: NIST NVD</text>
+
+  <!-- Arrow + HITL 2 -->
+  <line x1="425" y1="269" x2="425" y2="305" stroke="#4a5568" stroke-width="1.5" marker-end="url(#ah)"/>
+  <rect x="320" y="277" width="210" height="18" rx="9" fill="#d5e8d4" stroke="#82b366"/>
+  <text x="425" y="286" font-family="Arial, sans-serif" font-size="9" font-weight="bold" fill="#276749" text-anchor="middle" dominant-baseline="middle">HITL · Participant approves threats</text>
+
+  <!-- 3. Code Generator -->
+  <rect x="308" y="305" width="234" height="56" rx="4" fill="#dae8fc" stroke="#6c8ebf"/>
+  <text x="425" y="321" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#1a4b7a" text-anchor="middle" dominant-baseline="middle">3. Code Generator</text>
+  <text x="425" y="337" font-family="Arial, sans-serif" font-size="10" fill="#4a6080" text-anchor="middle" dominant-baseline="middle">Participant writes code with per-step hints</text>
+  <text x="425" y="351" font-family="Arial, sans-serif" font-size="9" fill="#718096" text-anchor="middle" dominant-baseline="middle">Security caps from threat model · Adaptive guidance</text>
+
+  <!-- Arrow + HITL 3 -->
+  <line x1="425" y1="361" x2="425" y2="397" stroke="#4a5568" stroke-width="1.5" marker-end="url(#ah)"/>
+  <rect x="320" y="369" width="210" height="18" rx="9" fill="#d5e8d4" stroke="#82b366"/>
+  <text x="425" y="378" font-family="Arial, sans-serif" font-size="9" font-weight="bold" fill="#276749" text-anchor="middle" dominant-baseline="middle">HITL · Participant submits code</text>
+
+  <!-- 4. Code Reviewer -->
+  <rect x="308" y="397" width="234" height="54" rx="4" fill="#dae8fc" stroke="#6c8ebf"/>
+  <text x="425" y="413" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#1a4b7a" text-anchor="middle" dominant-baseline="middle">4. Code Reviewer</text>
+  <text x="425" y="428" font-family="Arial, sans-serif" font-size="10" fill="#4a6080" text-anchor="middle" dominant-baseline="middle">Bandit static analysis + GPT-4o LLM review</text>
+  <text x="425" y="443" font-family="Arial, sans-serif" font-size="9" fill="#718096" text-anchor="middle" dominant-baseline="middle">Checks each threat mitigation · MCP: Bandit</text>
+
+  <!-- Arrow + HITL 4 -->
+  <line x1="425" y1="451" x2="425" y2="487" stroke="#4a5568" stroke-width="1.5" marker-end="url(#ah)"/>
+  <rect x="320" y="459" width="210" height="18" rx="9" fill="#d5e8d4" stroke="#82b366"/>
+  <text x="425" y="468" font-family="Arial, sans-serif" font-size="9" font-weight="bold" fill="#276749" text-anchor="middle" dominant-baseline="middle">HITL · Participant reviews findings</text>
+
+  <!-- 5. Verifier -->
+  <rect x="308" y="487" width="234" height="78" rx="4" fill="#dae8fc" stroke="#6c8ebf"/>
+  <text x="425" y="503" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#1a4b7a" text-anchor="middle" dominant-baseline="middle">5. Verifier</text>
+  <text x="425" y="519" font-family="Arial, sans-serif" font-size="10" fill="#4a6080" text-anchor="middle" dominant-baseline="middle">Independent Bandit run + sandboxed execution</text>
+  <text x="425" y="533" font-family="Arial, sans-serif" font-size="9" fill="#718096" text-anchor="middle" dominant-baseline="middle">MCP: Bandit (indep.) · MCP: Sandbox · RAG: CWE</text>
+  <text x="425" y="547" font-family="Arial, sans-serif" font-size="9" fill="#718096" text-anchor="middle" dominant-baseline="middle">Per-threat PASS / FAIL verdict</text>
+  <text x="425" y="558" font-family="Arial, sans-serif" font-size="9" fill="#718096" text-anchor="middle" dominant-baseline="middle">(separate state from Code Reviewer — genuine second check)</text>
+
+  <line x1="425" y1="565" x2="425" y2="582" stroke="#4a5568" stroke-width="1.5" marker-end="url(#ah)"/>
+
+  <!-- JSONL log multi-agent -->
+  <rect x="308" y="582" width="234" height="36" rx="4" fill="#f7fafc" stroke="#b0b8c1"/>
+  <text x="425" y="595" font-family="Arial, sans-serif" font-size="11" fill="#4a5568" text-anchor="middle" dominant-baseline="middle">Session logged (JSONL)</text>
+  <text x="425" y="609" font-family="Arial, sans-serif" font-size="9" fill="#a0aec0" text-anchor="middle" dominant-baseline="middle">condition: "multiagent"</text>
+
+  <!-- ================================================================ -->
+  <!-- TOOL INTEGRATIONS                                                  -->
+  <!-- ================================================================ -->
+
+  <!-- THREAT MODELLER tools -->
+  <!-- RAG: CWE Top 25 -->
+  <rect x="560" y="221" width="210" height="28" rx="4" fill="#fff8dc" stroke="#d6b656"/>
+  <text x="572" y="231" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#7a5c00" dominant-baseline="middle">RAG</text>
+  <text x="598" y="231" font-family="Arial, sans-serif" font-size="10" fill="#555" dominant-baseline="middle"> CWE Top 25 corpus</text>
+  <text x="572" y="243" font-family="Arial, sans-serif" font-size="8.5" fill="#888" dominant-baseline="middle">ChromaDB · text-embedding-3-small · LLM rerank</text>
+
+  <!-- NIST NVD -->
+  <rect x="560" y="255" width="210" height="28" rx="4" fill="#fff8dc" stroke="#d6b656"/>
+  <text x="572" y="265" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#7a5c00" dominant-baseline="middle">MCP</text>
+  <text x="598" y="265" font-family="Arial, sans-serif" font-size="10" fill="#555" dominant-baseline="middle"> NIST NVD — live CVEs</text>
+  <text x="572" y="277" font-family="Arial, sans-serif" font-size="8.5" fill="#888" dominant-baseline="middle">stdio transport · real-time vulnerability data</text>
+
+  <!-- Connectors for TM tools -->
+  <line x1="542" y1="235" x2="560" y2="235" stroke="#b89a1e" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#ahd)"/>
+  <line x1="542" y1="269" x2="560" y2="269" stroke="#b89a1e" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#ahd)"/>
+
+  <!-- CODE REVIEWER tool -->
+  <rect x="560" y="407" width="210" height="28" rx="4" fill="#fff8dc" stroke="#d6b656"/>
+  <text x="572" y="417" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#7a5c00" dominant-baseline="middle">MCP</text>
+  <text x="598" y="417" font-family="Arial, sans-serif" font-size="10" fill="#555" dominant-baseline="middle"> Bandit — static analysis</text>
+  <text x="572" y="429" font-family="Arial, sans-serif" font-size="8.5" fill="#888" dominant-baseline="middle">Python security linter · stored as bandit_findings_review</text>
+
+  <!-- Connector for CR -->
+  <line x1="542" y1="421" x2="560" y2="421" stroke="#b89a1e" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#ahd)"/>
+
+  <!-- VERIFIER tools -->
+  <!-- Bandit (independent) -->
+  <rect x="560" y="491" width="210" height="28" rx="4" fill="#fff8dc" stroke="#d6b656"/>
+  <text x="572" y="501" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#7a5c00" dominant-baseline="middle">MCP</text>
+  <text x="598" y="501" font-family="Arial, sans-serif" font-size="10" fill="#555" dominant-baseline="middle"> Bandit (independent run)</text>
+  <text x="572" y="513" font-family="Arial, sans-serif" font-size="8.5" fill="#888" dominant-baseline="middle">Stored as bandit_findings_verify — never shared with CR</text>
+
+  <!-- Sandbox -->
+  <rect x="560" y="525" width="210" height="28" rx="4" fill="#fff8dc" stroke="#d6b656"/>
+  <text x="572" y="535" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#7a5c00" dominant-baseline="middle">MCP</text>
+  <text x="598" y="535" font-family="Arial, sans-serif" font-size="10" fill="#555" dominant-baseline="middle"> Sandbox — code execution</text>
+  <text x="572" y="547" font-family="Arial, sans-serif" font-size="8.5" fill="#888" dominant-baseline="middle">Isolated subprocess · catches runtime failures</text>
+
+  <!-- RAG CWE (verifier independent) -->
+  <rect x="560" y="559" width="210" height="28" rx="4" fill="#fff8dc" stroke="#d6b656"/>
+  <text x="572" y="569" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#7a5c00" dominant-baseline="middle">RAG</text>
+  <text x="598" y="569" font-family="Arial, sans-serif" font-size="10" fill="#555" dominant-baseline="middle"> CWE Top 25 (independent re-query)</text>
+  <text x="572" y="581" font-family="Arial, sans-serif" font-size="8.5" fill="#888" dominant-baseline="middle">Re-queried independently from Threat Modeller</text>
+
+  <!-- Connectors for Verifier -->
+  <line x1="542" y1="505" x2="560" y2="505" stroke="#b89a1e" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#ahd)"/>
+  <line x1="542" y1="539" x2="560" y2="539" stroke="#b89a1e" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#ahd)"/>
+  <line x1="542" y1="573" x2="560" y2="573" stroke="#b89a1e" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#ahd)"/>
+
+  <!-- ================================================================ -->
+  <!-- LEGEND                                                             -->
+  <!-- ================================================================ -->
+  <rect x="848" y="78" width="234" height="156" rx="5" fill="#f9fafb" stroke="#dde2e8"/>
+  <text x="862" y="96" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#4a5568" dominant-baseline="middle">Legend</text>
+
+  <rect x="862" y="108" width="24" height="14" rx="2" fill="#dae8fc" stroke="#6c8ebf"/>
+  <text x="892" y="115" font-family="Arial, sans-serif" font-size="10" fill="#4a5568" dominant-baseline="middle">AI Agent (GPT-4o)</text>
+
+  <rect x="862" y="130" width="24" height="14" rx="2" fill="#d5e8d4" stroke="#82b366"/>
+  <text x="892" y="137" font-family="Arial, sans-serif" font-size="10" fill="#4a5568" dominant-baseline="middle">HITL checkpoint</text>
+
+  <rect x="862" y="152" width="24" height="14" rx="2" fill="#fff8dc" stroke="#d6b656"/>
+  <text x="892" y="159" font-family="Arial, sans-serif" font-size="10" fill="#4a5568" dominant-baseline="middle">External tool (MCP / RAG)</text>
+
+  <rect x="862" y="174" width="24" height="14" rx="2" fill="#f7fafc" stroke="#b0b8c1"/>
+  <text x="892" y="181" font-family="Arial, sans-serif" font-size="10" fill="#4a5568" dominant-baseline="middle">Data input / output</text>
+
+  <line x1="862" y1="203" x2="886" y2="203" stroke="#b89a1e" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#ahd)"/>
+  <text x="892" y="203" font-family="Arial, sans-serif" font-size="10" fill="#4a5568" dominant-baseline="middle">Tool connection</text>
+
+  <line x1="862" y1="222" x2="886" y2="222" stroke="#4a5568" stroke-width="1.5" marker-end="url(#ah)"/>
+  <text x="892" y="222" font-family="Arial, sans-serif" font-size="10" fill="#4a5568" dominant-baseline="middle">Control / data flow</text>
+
+  <!-- ================================================================ -->
+  <!-- EVALUATION BAR                                                     -->
+  <!-- ================================================================ -->
+  <rect x="18" y="644" width="1064" height="46" rx="4" fill="#fef3c7" stroke="#d97706"/>
+  <text x="550" y="661" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#78350f" text-anchor="middle" dominant-baseline="middle">Evaluation</text>
+  <text x="550" y="678" font-family="Arial, sans-serif" font-size="10" fill="#92400e" text-anchor="middle" dominant-baseline="middle">Independent Bandit scoring on both conditions · Severity weights HIGH=3 / MEDIUM=2 / LOW=1 · Mann-Whitney U test · Effect size r = Z / √N</text>
+
+</svg>

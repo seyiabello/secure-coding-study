@@ -33,29 +33,9 @@ After the experiment, an independent Bandit run scores every submission from bot
 
 The proposal showed a hub-and-spoke diagram. The implementation is different: a linear sequential pipeline with human-in-the-loop (HITL) checkpoints at each stage. The human is not an external orchestrator controlling agents in parallel. They are a participant embedded inside the pipeline, approving one stage at a time.
 
-```mermaid
-flowchart TD
-    START([Participant submits task]) --> PLAN
+![System architecture](docs/architecture.svg)
 
-    subgraph pipeline["Five-Agent Pipeline"]
-        PLAN["Planner\nBreaks task into ordered steps\nIdentifies security requirements"]
-        PLAN -->|"HITL: approve or revise plan"| THREAT
-        THREAT["Threat Modeller\nRAG over CWE Top 25 corpus\nLive CVEs from NIST NVD via MCP"]
-        THREAT -->|"HITL: approve or adjust threats"| CODE
-        CODE["Code Generator\nParticipant writes code with hints\nPer-step hint caps based on threat model\nAdaptive next-step analysis on demand"]
-        CODE -->|"HITL: participant submits code"| REVIEW
-        REVIEW["Code Reviewer\nBandit static analysis via MCP\nLLM review against each threat mitigation"]
-        REVIEW -->|"HITL: participant reviews findings"| VERIFY
-        VERIFY["Verifier\nIndependent Bandit run via MCP\nSandboxed execution via MCP\nRAG re-query for CWE verdicts\nPer-threat PASS or FAIL verdict"]
-    end
-
-    VERIFY --> LOG([Session logged to JSONL])
-    LOG --> EVAL["Evaluation\nBandit scoring on both conditions\nMann-Whitney U + effect size"]
-
-    style pipeline fill:#0f172a,stroke:#1e3a5f,color:#f3f4f6
-```
-
-The baseline is a single node sitting outside this pipeline: one GPT-4o call with no security instructions.
+The baseline is a single GPT-4o call sitting outside this pipeline: a three-line, security-free prompt, one response, nothing else.
 
 ---
 
