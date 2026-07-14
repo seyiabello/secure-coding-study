@@ -1,0 +1,14 @@
+.git
+.gitignore
+frontend/
+frontend/node_modules/
+frontend/.next/
+tests/
+*.md
+*.toml
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.env
+logs/
