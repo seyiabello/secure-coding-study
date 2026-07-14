@@ -15,6 +15,14 @@ Does adding structure, specialised roles, and real security tooling to an AI pip
 
 This project builds both sides of that question as a controlled experiment.
 
+**Live deployment**
+
+| | URL |
+|---|---|
+| Frontend (Vercel) | https://secure-coding-study.vercel.app |
+| Backend API (Fly.io) | https://secure-coding-study-api.fly.dev |
+| API docs | https://secure-coding-study-api.fly.dev/docs |
+
 ---
 
 ## What was built
