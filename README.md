@@ -1,175 +1,217 @@
-# Baseline Coding Agent
+# Secure Coding Study
 
 **MSc Research Project · University of Exeter · COMM514**
 
 ![Python](https://img.shields.io/badge/Python-3.11-3776AB?style=flat&logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?style=flat&logo=fastapi&logoColor=white)
+![Next.js](https://img.shields.io/badge/Next.js-16-black?style=flat&logo=next.js&logoColor=white)
+![LangGraph](https://img.shields.io/badge/LangGraph-pipeline-6366f1?style=flat)
 ![OpenAI](https://img.shields.io/badge/OpenAI-GPT--4o-412991?style=flat&logo=openai&logoColor=white)
-![SDK](https://img.shields.io/badge/OpenAI%20SDK-Direct-412991?style=flat&logo=openai&logoColor=white)
-![Tests](https://img.shields.io/badge/Tests-8%20passing-22c55e?style=flat&logo=pytest&logoColor=white)
-![Temp](https://img.shields.io/badge/Temperature-0.2-F97316?style=flat)
-![Logging](https://img.shields.io/badge/Logging-JSONL-6366F1?style=flat)
+![ChromaDB](https://img.shields.io/badge/RAG-ChromaDB-F97316?style=flat)
+![Tests](https://img.shields.io/badge/tests-21%20passing-22c55e?style=flat&logo=pytest&logoColor=white)
 ![Research](https://img.shields.io/badge/University%20of%20Exeter-MSc%20Research-003c71?style=flat)
-![Next](https://img.shields.io/badge/Next-LangGraph%20%C2%B7%20RAG%20%C2%B7%20MCP-8B5CF6?style=flat)
 
-A single-agent AI coding assistant built with Python and the OpenAI API. This is the control condition for a controlled experiment comparing simple single-agent AI against a structured multi-agent system for secure code generation. You submit a coding task, GPT-4o returns working code, and the session is logged for analysis.
+Does adding structure, specialised roles, and real security tooling to an AI pipeline produce measurably fewer vulnerabilities than a single model doing everything at once?
+
+This project builds both sides of that question as a controlled experiment.
+
+---
+
+## What was built
+
+Two conditions, one experiment.
+
+**Baseline** gives a participant a coding task and sends it straight to GPT-4o with a three-sentence, security-free prompt. One API call, one response, nothing else. This is the control group.
+
+**Multi-agent** routes the same task through a five-agent LangGraph pipeline. A Planner breaks the task into steps, a Threat Modeller pulls real CWEs from a RAG corpus and live CVEs from NIST NVD, the participant writes the code themselves with structured per-step hints that are security-capped, a Code Reviewer runs Bandit static analysis plus an LLM review against the threat model, and a Verifier does a fully independent second pass with sandboxed code execution. The participant approves or adjusts the output at each stage before the next agent runs.
+
+After the experiment, an independent Bandit run scores every submission from both conditions. A Mann-Whitney U test then compares the vulnerability distributions.
 
 ---
 
 ## Architecture
 
-![Baseline agent architecture](screenshots/baseline%20coding%20agent.PNG)
+The proposal showed a hub-and-spoke diagram. The implementation is different: a linear sequential pipeline with human-in-the-loop (HITL) checkpoints at each stage. The human is not an external orchestrator controlling agents in parallel. They are a participant embedded inside the pipeline, approving one stage at a time.
 
-The flow is linear:
+```mermaid
+flowchart TD
+    START([Participant submits task]) --> PLAN
 
-```
-Developer types task
-       |
-Terminal CLI (baseline/agent.py)
-       |
-run_baseline() -- single GPT-4o call, temp 0.2
-       |
-Code response printed to terminal
-       |
-Session logged to JSONL
-```
+    subgraph pipeline["Five-Agent Pipeline"]
+        PLAN["Planner\nBreaks task into ordered steps\nIdentifies security requirements"]
+        PLAN -->|"HITL: approve or revise plan"| THREAT
+        THREAT["Threat Modeller\nRAG over CWE Top 25 corpus\nLive CVEs from NIST NVD via MCP"]
+        THREAT -->|"HITL: approve or adjust threats"| CODE
+        CODE["Code Generator\nParticipant writes code with hints\nPer-step hint caps based on threat model\nAdaptive next-step analysis on demand"]
+        CODE -->|"HITL: participant submits code"| REVIEW
+        REVIEW["Code Reviewer\nBandit static analysis via MCP\nLLM review against each threat mitigation"]
+        REVIEW -->|"HITL: participant reviews findings"| VERIFY
+        VERIFY["Verifier\nIndependent Bandit run via MCP\nSandboxed execution via MCP\nRAG re-query for CWE verdicts\nPer-threat PASS or FAIL verdict"]
+    end
 
-No branching. No agents talking to each other. No tools. No vector databases. Just a developer, a prompt, and GPT-4o.
+    VERIFY --> LOG([Session logged to JSONL])
+    LOG --> EVAL["Evaluation\nBandit scoring on both conditions\nMann-Whitney U + effect size"]
 
----
-
-## See it in action
-
-![Agent responding to a coding task](screenshots/agentresponse.PNG)
-
-The agent takes a plain-English coding task, calls GPT-4o, and prints the result directly in the terminal. No delays, no intermediate steps, no review loops.
-
----
-
-## Simple by design
-
-This agent is intentionally minimal. That is not a limitation, it is the point.
-
-In a controlled experiment, one condition has to be the baseline. Adding security prompting, multi-step review, or tool integrations to this agent would corrupt the comparison. The whole research question is whether a more structured architecture produces more secure code than a basic one-shot approach. If both conditions have the same capabilities, there is nothing to compare.
-
-So this agent does exactly one thing: take a task, call GPT-4o, return the code.
-
-Everything else comes in the multi-agent system built next.
-
----
-
-## How it works
-
-![Agent source code](screenshots/agent%20file.PNG)
-
-The core logic is three functions:
-
-- **`run_baseline(task)`** sends a single system prompt and the user's task to GPT-4o, then returns the response. One API call. No iteration.
-- **`log_session()`** appends a timestamped JSON record to `logs/baseline_sessions.jsonl` after every session.
-- **`main()`** is the terminal interface. It loops, accepts tasks, and exits cleanly on `quit`.
-
-The system prompt is kept minimal on purpose. No security instructions. No structured output format. No guidance beyond "write working, readable code." That is the baseline.
-
----
-
-## Session logging
-
-Every session produces a structured log record:
-
-![JSONL session log](screenshots/log.PNG)
-
-```json
-{
-  "timestamp": "2026-06-07T20:54:26.988572+00:00",
-  "condition": "baseline",
-  "participant_id": "DEV",
-  "model": "gpt-4o",
-  "temperature": 0.2,
-  "task": "Write a Python function that reads a file and returns its contents",
-  "response": "...",
-  "duration_seconds": 8.407
-}
+    style pipeline fill:#0f172a,stroke:#1e3a5f,color:#f3f4f6
 ```
 
-The schema is identical across both conditions in the experiment (baseline and multi-agent), which makes statistical comparison straightforward. The only field that differs is `condition`.
+The baseline is a single node sitting outside this pipeline: one GPT-4o call with no security instructions.
+
+---
+
+## Key design decisions
+
+**Why is temperature 0.2 everywhere and set in one shared file?**
+The experiment measures architecture, not randomness. Consistent temperature means any difference in output quality comes from the pipeline design. One shared `config.py` makes it impossible for a single agent to silently use a different setting.
+
+**Why is the baseline prompt deliberately minimal with no security instructions?**
+Scientific validity. Adding security guidance to the baseline would artificially close the gap. The research question only makes sense if the two conditions differ only in their architecture, not their instructions.
+
+**Why LangGraph instead of a simpler approach?**
+LangGraph handles shared state across five async agents and the pause-and-resume pattern for HITL checkpoints without custom plumbing. The tradeoff is a steeper learning curve, but the alternative was building a bespoke async state machine that would have added complexity with no research value.
+
+**Why are Bandit runs kept independent between Code Reviewer and Verifier?**
+The Verifier is a genuine second check, not a repeat. If both agents shared Bandit results, the two checks would be correlated and the combined verdict would be less meaningful. Separate state fields (`bandit_findings_review` and `bandit_findings_verify`) enforce this at the data level.
+
+**Why Mann-Whitney U rather than a t-test?**
+Vulnerability counts from small samples (around 26 per condition) are unlikely to be normally distributed. Mann-Whitney is the appropriate non-parametric test for this kind of ordinal, small-sample comparison.
+
+---
+
+## Project structure
+
+```
+secure-coding-study/
+├── backend/
+│   ├── main.py                   FastAPI entry point
+│   ├── config.py                 Shared OpenAI client, MODEL, TEMPERATURE
+│   ├── models.py                 Pydantic request/response schemas
+│   ├── routes/                   API route handlers
+│   ├── mcp_client.py             MultiServerMCPClient wrapper
+│   ├── baseline/                 Single-agent baseline (control condition)
+│   │   ├── agent.py
+│   │   ├── prompts.py
+│   │   └── README.md
+│   ├── multiagent/               Five-agent LangGraph pipeline
+│   │   ├── graph.py              Pipeline wiring and HITL checkpoints
+│   │   ├── state.py              Shared AgentState TypedDicts
+│   │   ├── step_classifier.py    Per-step hint cap assignment via GPT-4o
+│   │   └── agents/
+│   │       ├── planner.py
+│   │       ├── threat_modeller.py
+│   │       ├── code_generator.py
+│   │       ├── code_reviewer.py
+│   │       └── verifier.py
+│   ├── rag/                      ChromaDB vector store and retrieval pipeline
+│   ├── mcp_servers/              Bandit, NIST NVD, and Sandbox MCP servers
+│   └── evaluation/               Bandit scoring and statistical analysis
+├── frontend/                     Next.js 16 participant interface
+│   └── app/
+│       ├── page.tsx              Landing page
+│       └── study/
+│           ├── baseline/         Baseline condition UI
+│           └── multiagent/       Multi-agent condition UI
+├── tests/                        pytest suite, 21 tests, no real API calls
+└── logs/                         JSONL session logs (gitignored)
+```
 
 ---
 
 ## Tech stack
 
-| Layer | Technology |
-|---|---|
-| Language | Python 3.11 |
-| LLM | GPT-4o via OpenAI API |
-| API client | OpenAI Python SDK (direct, no LangChain) |
-| Logging | JSONL |
-| Config | python-dotenv |
+| Layer | Technology | Why it was chosen |
+|---|---|---|
+| LLM | GPT-4o | Strongest available reasoning for security analysis |
+| Orchestration | LangGraph | Native HITL checkpointing with shared state across agents |
+| Vector store | ChromaDB | Fast local search, no external database dependency |
+| Embeddings | `text-embedding-3-small` | Efficient and accurate for short CWE descriptions |
+| RAG reranking | GPT-4o | LLM-as-judge selects top 3 from 10 retrieved chunks |
+| Static analysis | Bandit via MCP | Industry-standard Python security linter, run twice independently |
+| Threat intelligence | NIST NVD via MCP | Live CVE data to ground threat modelling in real vulnerabilities |
+| Sandboxed execution | Custom MCP server | Safe code execution for the Verifier without host system risk |
+| Backend API | FastAPI + uvicorn | Async, type-safe, OpenAPI documentation built in |
+| Frontend | Next.js 16, React 19, TypeScript | Production-grade participant interface with Monaco Editor |
+| Statistics | scipy | Mann-Whitney U, Wilcoxon signed-rank, Kruskal-Wallis |
 
 ---
 
-## Running it yourself
+## Running locally
 
-**1. Clone the repo and install dependencies**
+### Prerequisites
 
-```bash
-git clone https://github.com/seyiabello/gpt4o-coding-agent.git
-cd gpt4o-coding-agent
-pip install openai python-dotenv
-```
+- Python 3.11 or higher
+- Node.js 20 or higher
+- An OpenAI API key with GPT-4o access
 
-**2. Add your OpenAI API key**
-
-Create a `.env` file in the project root:
-
-```
-OPENAI_API_KEY=your-key-here
-```
-
-**3. Start the agent**
+### Backend
 
 ```bash
-python -m baseline.agent
+# From the project root
+python -m venv venv
+venv\Scripts\activate          # Windows
+# source venv/bin/activate     # Mac / Linux
+
+pip install -r requirements.txt
+
+cp .env.example .env
+# Edit .env and add your OPENAI_API_KEY
+
+cd backend
+uvicorn main:app --reload --port 8000
 ```
 
-**4. Submit a task**
+### Ingest the CWE corpus (run once before the first session)
 
+```bash
+# From backend/
+python -m rag.ingest
 ```
-Participant ID (e.g. P01): DEV
 
-Task: Write a Python function that parses a JSON file and returns a dict
+### Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+# Open http://localhost:3000
 ```
 
-Type `quit` to end the session.
+### Tests
+
+```bash
+# From the project root (PowerShell)
+$env:PYTHONPATH = "backend"
+python -m pytest tests/ -v
+```
 
 ---
 
-## Running the tests
+## Evaluation
+
+After data collection, run the analysis from the project root:
 
 ```bash
-python -m unittest tests.test_baseline -v
+$env:PYTHONPATH = "backend"
+python -m evaluation.stats
 ```
 
-8 unit tests cover the core functions with no real API calls.
+This loads both JSONL log files, runs an independent Bandit pass over every submission, computes three scores per session (vulnerability count, severity-weighted score using HIGH=3/MEDIUM=2/LOW=1, and high-severity count), and outputs the Mann-Whitney U result with effect size r = Z / sqrt(N).
 
 ---
 
-## What comes next
+## Agent READMEs
 
-This agent is the starting point. The next build is a five-agent system where a human participant works alongside a team of specialised AI agents:
+Each agent has its own README covering what it does, how it fits in the pipeline, and the key design decisions behind it.
 
-1. **Planner** breaks the task into steps and defines scope
-2. **Threat Modeller** identifies security risks and maps them to the CWE Top 25
-3. **Code Generator** writes code informed by the plan and threat model
-4. **Code Reviewer** runs static analysis via Bandit and critiques the output
-5. **Verifier** validates the final code against the original threat model
-
-That system adds RAG over a CWE corpus (ChromaDB), MCP tool integrations (Bandit, NIST NVD, sandboxed execution), and a LangGraph orchestration layer. The human participant approves, revises, or overrides at each stage.
-
-The experiment will measure whether that structured approach reduces vulnerability density compared to this baseline.
+- [Baseline (control condition)](backend/baseline/README.md)
+- [Planner](backend/multiagent/agents/README_planner.md)
+- [Threat Modeller](backend/multiagent/agents/README_threat_modeller.md)
+- [Code Generator](backend/multiagent/agents/README_code_generator.md)
+- [Code Reviewer](backend/multiagent/agents/README_code_reviewer.md)
+- [Verifier](backend/multiagent/agents/README_verifier.md)
 
 ---
 
 ## Research context
 
-This project is part of an MSc dissertation at the University of Exeter (COMM514). It is a controlled experiment, not a production tool. Participants are computer science and software engineering students. All sessions are anonymised. Ethics approval is in progress via Worktribe.
-
-> Supervisor confirmed: complexity is justified if it improves output quality. The goal is to build something outstanding.
+MSc Cybersecurity dissertation, University of Exeter (COMM514). Target sample: approximately 56 participants split evenly across both conditions. Primary outcome measure: high-severity Bandit finding count per submission. Secondary analyses control for task order effects (Wilcoxon signed-rank) and task difficulty as a confound (Kruskal-Wallis).

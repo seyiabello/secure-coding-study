@@ -9,3 +9,5 @@ scipy
 chromadb
 bandit
 httpx
+fastapi
+uvicorn[standard]
