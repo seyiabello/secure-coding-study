@@ -1,15 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
+import { AnimatePresence, motion, useReducedMotion, type Variants } from "motion/react";
 import { fetchShuffledTasks, generateCode, type Task } from "@/lib/api";
-import { FocusInput, PrimaryButton } from "@/app/page";
 
 const MonacoEditor = dynamic(() => import("@monaco-editor/react"), {
   ssr: false,
   loading: () => <EditorSkeleton />,
 });
+
+const EASE_OUT: [number, number, number, number] = [0.16, 1, 0.3, 1];
+// Critically-damped spring — matches the no-overshoot settle-in feel extracted from
+// cosmoq.framer.website's load-in animation (see frontend/docs/COSMOQ_INTERACTIONS.md).
+const SPRING_SETTLE = { type: "spring", stiffness: 130, damping: 20, mass: 1 } as const;
 
 /* ── Types ───────────────────────────────────────────────────────────────── */
 
@@ -25,6 +30,9 @@ interface TaskResult {
 
 export default function BaselinePage() {
   const router = useRouter();
+  const prefersReducedMotion = useReducedMotion();
+  const notesRef = useRef<HTMLTextAreaElement>(null);
+
   const [participantId, setParticipantId] = useState<string | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [taskIndex, setTaskIndex] = useState(0);
@@ -35,6 +43,19 @@ export default function BaselinePage() {
   const [apiError, setApiError] = useState<string | null>(null);
 
   const currentResult = results[taskIndex] ?? null;
+  const currentTask = tasks[taskIndex];
+
+  const phaseVariants: Variants = prefersReducedMotion
+    ? {
+        initial: { opacity: 0 },
+        animate: { opacity: 1, transition: { duration: 0.2 } },
+        exit: { opacity: 0, transition: { duration: 0.1 } },
+      }
+    : {
+        initial: { opacity: 0, y: 14, scale: 0.99 },
+        animate: { opacity: 1, y: 0, scale: 1, transition: SPRING_SETTLE },
+        exit: { opacity: 0, y: -8, scale: 0.99, transition: { duration: 0.14 } },
+      };
 
   /* — init — */
   useEffect(() => {
@@ -78,9 +99,7 @@ export default function BaselinePage() {
       setNotes("");
       setPhase("reviewing");
     } catch (err) {
-      setApiError(
-        err instanceof Error ? err.message : "Generation failed. Check the backend."
-      );
+      setApiError(err instanceof Error ? err.message : "Generation failed. Check the backend.");
       setPhase("ready");
     }
   }
@@ -106,41 +125,26 @@ export default function BaselinePage() {
 
   if (phase === "complete") {
     return (
-      <div
-        style={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: "48px 24px",
-          backgroundColor: "#030712",
-        }}
-      >
-        <div style={{ textAlign: "center", maxWidth: "420px" }}>
-          <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: "52px",
-              height: "52px",
-              borderRadius: "50%",
-              backgroundColor: "#052e16",
-              border: "1px solid #15803d",
-              marginBottom: "24px",
-            }}
-          >
+      <div className="oled-scope relative flex min-h-screen items-center justify-center px-6 py-12">
+        <div className="oled-ambient-orange" />
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: EASE_OUT }}
+          className="relative z-10 max-w-[420px] text-center"
+        >
+          <div className="check-pop mx-auto mb-6 flex h-[52px] w-[52px] items-center justify-center rounded-full border border-success bg-success-surface">
             <svg width="22" height="22" viewBox="0 0 20 20" fill="none" aria-hidden="true">
               <path d="M4 10l4.5 4.5L16 6" stroke="#86efac" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
-          <h1 style={{ fontSize: "22px", fontWeight: "700", color: "#f3f4f6", margin: "0 0 10px" }}>
+          <h1 className="mb-2.5 text-xl font-medium tracking-[-0.4px] text-ink">
             All {tasks.length} tasks complete
           </h1>
-          <p style={{ fontSize: "15px", color: "#9ca3af", margin: 0 }}>
+          <p className="text-[15px] text-ink-muted">
             Thank you for participating. You may now close this browser tab.
           </p>
-        </div>
+        </motion.div>
       </div>
     );
   }
@@ -148,265 +152,144 @@ export default function BaselinePage() {
   /* ── Main layout ─────────────────────────────────────────────────────────── */
 
   return (
-    <div style={{ minHeight: "100vh", backgroundColor: "#030712" }}>
-
+    <div className="oled-scope relative min-h-screen">
+      <div className="oled-ambient-orange" />
       {/* Progress header */}
-      <div
-        style={{
-          position: "sticky",
-          top: 0,
-          zIndex: 10,
-          backgroundColor: "#111827",
-          borderBottom: "1px solid #1f2937",
-        }}
-      >
-        <div
-          style={{
-            maxWidth: "1080px",
-            margin: "0 auto",
-            padding: "14px 32px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-            <ProgressDots
-              total={tasks.length || 4}
-              current={taskIndex}
-              reviewing={phase === "reviewing"}
-            />
-            <span style={{ fontSize: "14px", fontWeight: "500", color: "#d1d5db" }}>
+      <header className="sticky top-0 z-20 border-b border-hairline bg-oled-1">
+        <div className="mx-auto flex max-w-[860px] items-center justify-between px-6 py-3.5">
+          <div className="flex items-center gap-3.5">
+            <ProgressDots total={tasks.length || 4} current={taskIndex} reviewing={phase === "reviewing"} />
+            <span className="text-sm font-medium text-ink-secondary">
               {tasks.length > 0 ? `Task ${taskIndex + 1} of ${tasks.length}` : "Loading…"}
             </span>
           </div>
-          {participantId && (
-            <span style={{ fontFamily: "monospace", fontSize: "12px", color: "#6b7280" }}>
-              {participantId}
-            </span>
-          )}
+          {participantId && <span className="font-mono text-xs text-ink-faint">{participantId}</span>}
         </div>
-      </div>
+      </header>
 
       {/* Content */}
-      <div
-        style={{
-          maxWidth: "1080px",
-          margin: "0 auto",
-          padding: "32px 32px 64px",
-        }}
-      >
+      <main className="relative z-10 mx-auto max-w-[860px] px-6 py-8">
         {/* Error banner */}
         {apiError && phase !== "reviewing" && (
           <div
-            style={{
-              backgroundColor: "#450a0a",
-              border: "1px solid #991b1b",
-              borderRadius: "12px",
-              padding: "16px 20px",
-              marginBottom: "20px",
-              display: "flex",
-              gap: "12px",
-              alignItems: "flex-start",
-            }}
+            role="alert"
+            className="mb-6 flex items-start gap-3 rounded-2xl border border-danger-border/60 bg-danger-surface/70 px-5 py-4"
           >
-            <span style={{ fontSize: "14px", fontWeight: "700", color: "#f87171", flexShrink: 0 }}>✕</span>
-            <p style={{ fontSize: "14px", color: "#f87171", margin: 0, whiteSpace: "pre-wrap", flex: 1 }}>
-              {apiError}
-            </p>
+            <span className="flex-shrink-0 font-bold text-danger-ink">✕</span>
+            <p className="flex-1 whitespace-pre-wrap text-sm text-danger-ink">{apiError}</p>
             <button
               onClick={() => setApiError(null)}
-              style={{ fontSize: "12px", color: "#9ca3af", background: "none", border: "none", cursor: "pointer", flexShrink: 0 }}
+              className="flex-shrink-0 cursor-pointer text-xs text-ink-muted transition-colors hover:text-ink-secondary"
             >
               dismiss
             </button>
           </div>
         )}
 
-        {/* Loading skeleton */}
-        {phase === "loading" && (
-          <div
-            style={{
-              backgroundColor: "#111827",
-              border: "1px solid #1f2937",
-              borderRadius: "12px",
-              padding: "24px",
-            }}
-          >
-            <div className="skeleton" style={{ height: "12px", width: "80px", borderRadius: "6px", marginBottom: "20px" }} />
-            <div className="skeleton" style={{ height: "16px", width: "100%", borderRadius: "6px", marginBottom: "10px" }} />
-            <div className="skeleton" style={{ height: "16px", width: "85%", borderRadius: "6px", marginBottom: "10px" }} />
-            <div className="skeleton" style={{ height: "16px", width: "70%", borderRadius: "6px" }} />
-          </div>
-        )}
-
-        {/* Task card */}
-        {tasks[taskIndex] && (
-          <div
-            style={{
-              backgroundColor: "#111827",
-              border: "1px solid #1f2937",
-              borderRadius: "12px",
-              padding: "24px",
-              marginBottom: "20px",
-            }}
-          >
-            <p
-              style={{
-                fontSize: "11px",
-                fontWeight: "500",
-                textTransform: "uppercase",
-                letterSpacing: "0.07em",
-                color: "#9ca3af",
-                margin: "0 0 14px",
-              }}
-            >
+        {/* Task — shown across every phase, matching the multi-agent condition's structure */}
+        {currentTask && (
+          <div className="cosmoq-card-orange mb-6 p-6">
+            <p className="mb-2.5 text-[11px] font-semibold uppercase tracking-wider text-ink-faint">
               Task {taskIndex + 1} of {tasks.length}
             </p>
-            <p
-              style={{
-                fontSize: "15px",
-                lineHeight: "1.7",
-                color: "#d1d5db",
-                margin: 0,
-                maxWidth: "72ch",
-              }}
-            >
-              {tasks[taskIndex].text}
+            <p className="max-w-[72ch] text-base leading-relaxed tracking-[-0.48px] text-ink-secondary">
+              {currentTask.text}
             </p>
           </div>
         )}
 
-        {/* Ready — generate button */}
-        {phase === "ready" && !apiError && tasks.length > 0 && (
-          <div style={{ display: "flex", justifyContent: "center", padding: "8px 0 4px" }}>
-            <div style={{ width: "260px" }}>
-              <PrimaryButton onClick={handleGenerate}>Generate Code</PrimaryButton>
-            </div>
-          </div>
-        )}
-
-        {/* Generating — skeleton */}
-        {phase === "generating" && (
-          <div
-            style={{
-              borderRadius: "12px",
-              overflow: "hidden",
-              border: "1px solid #1f2937",
-            }}
-          >
-            <div
-              style={{
-                backgroundColor: "#111827",
-                borderBottom: "1px solid #1f2937",
-                padding: "12px 20px",
-              }}
-            >
-              <div className="skeleton" style={{ height: "12px", width: "120px", borderRadius: "6px" }} />
-            </div>
-            <EditorSkeleton />
-          </div>
-        )}
-
-        {/* Reviewing — code + notes + next */}
-        {phase === "reviewing" && currentResult && (
-          <>
-            {/* Code card */}
-            <div
-              style={{
-                borderRadius: "12px",
-                overflow: "hidden",
-                border: "1px solid #1f2937",
-                marginBottom: "20px",
-              }}
-            >
-              <div
-                style={{
-                  backgroundColor: "#111827",
-                  borderBottom: "1px solid #1f2937",
-                  padding: "12px 20px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                }}
-              >
-                <span
-                  style={{
-                    fontSize: "11px",
-                    fontWeight: "500",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.07em",
-                    color: "#9ca3af",
-                  }}
-                >
-                  Generated Code — edit if needed
-                </span>
-                <span style={{ fontFamily: "monospace", fontSize: "12px", color: "#6b7280" }}>
-                  ⏱ {currentResult.duration.toFixed(1)}s
-                </span>
+        <AnimatePresence mode="wait">
+          <motion.div key={phase} variants={phaseVariants} initial="initial" animate="animate" exit="exit">
+            {/* Loading skeleton */}
+            {phase === "loading" && (
+              <div className="cosmoq-card-orange p-6">
+                <div className="skeleton mb-5 h-3 w-20 rounded-md" />
+                <div className="skeleton mb-2.5 h-4 w-full rounded-md" />
+                <div className="skeleton mb-2.5 h-4 w-[85%] rounded-md" />
+                <div className="skeleton h-4 w-[70%] rounded-md" />
               </div>
-              <MonacoEditor
-                height="440px"
-                language="python"
-                value={editedCode}
-                theme="vs-dark"
-                onChange={(val) => setEditedCode(val ?? "")}
-                options={{
-                  minimap: { enabled: false },
-                  lineNumbers: "on",
-                  wordWrap: "on",
-                  scrollBeyondLastLine: false,
-                  fontSize: 13,
-                  padding: { top: 16, bottom: 16 },
-                }}
-              />
-            </div>
+            )}
 
-            {/* Notes card */}
-            <div
-              style={{
-                backgroundColor: "#111827",
-                border: "1px solid #1f2937",
-                borderRadius: "12px",
-                padding: "20px",
-                marginBottom: "24px",
-              }}
-            >
-              <label
-                style={{
-                  display: "block",
-                  fontSize: "11px",
-                  fontWeight: "500",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.07em",
-                  color: "#9ca3af",
-                  marginBottom: "10px",
-                }}
-              >
-                Notes{" "}
-                <span style={{ textTransform: "none", fontWeight: "400", color: "#6b7280" }}>
-                  — optional
-                </span>
-              </label>
-              <FocusInput
-                value={notes}
-                onChange={setNotes}
-                placeholder="Record any observations, concerns, or thoughts about this code."
-                rows={4}
-              />
-            </div>
-
-            {/* Advance button */}
-            <div style={{ display: "flex", justifyContent: "flex-end" }}>
-              <div style={{ width: "220px" }}>
-                <PrimaryButton variant="green" onClick={handleNext}>
-                  {taskIndex + 1 >= tasks.length ? "Complete Study" : "Next Task →"}
-                </PrimaryButton>
+            {/* Ready — generate button */}
+            {phase === "ready" && !apiError && tasks.length > 0 && (
+              <div className="flex justify-center py-2">
+                <div className="w-[260px]">
+                  <Btn onClick={handleGenerate}>Generate Code</Btn>
+                </div>
               </div>
-            </div>
-          </>
-        )}
-      </div>
+            )}
+
+            {/* Generating — skeleton editor */}
+            {phase === "generating" && (
+              <div className="cosmoq-card-orange overflow-hidden">
+                <div className="flex items-center justify-between border-b border-hairline px-5 py-3">
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-ink-faint">
+                    Generating Code…
+                  </span>
+                  <Spinner className="text-cosmoq-orange-bright" />
+                </div>
+                <EditorSkeleton />
+              </div>
+            )}
+
+            {/* Reviewing — code + notes + next */}
+            {phase === "reviewing" && currentResult && (
+              <>
+                <div className="cosmoq-card-orange mb-6 overflow-hidden">
+                  <div className="flex items-center justify-between border-b border-hairline px-5 py-3">
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-ink-faint">
+                      Generated Code (edit if needed)
+                    </span>
+                    <span className="font-mono text-xs text-ink-faint">
+                      {currentResult.duration.toFixed(1)}s
+                    </span>
+                  </div>
+                  <MonacoEditor
+                    height="440px"
+                    language="python"
+                    value={editedCode}
+                    theme="vs-dark"
+                    onChange={(val) => setEditedCode(val ?? "")}
+                    options={{
+                      minimap: { enabled: false },
+                      lineNumbers: "on",
+                      wordWrap: "on",
+                      scrollBeyondLastLine: false,
+                      fontSize: 13,
+                      padding: { top: 16, bottom: 16 },
+                    }}
+                  />
+                </div>
+
+                <div className="cosmoq-card-orange mb-6 p-6">
+                  <label
+                    htmlFor="baseline-notes"
+                    className="mb-2.5 block text-[11px] font-semibold uppercase tracking-wider text-ink-faint"
+                  >
+                    Notes <span className="font-normal normal-case text-ink-faint">(optional)</span>
+                  </label>
+                  <Field
+                    id="baseline-notes"
+                    inputRef={notesRef}
+                    value={notes}
+                    onChange={setNotes}
+                    placeholder="Record any observations, concerns, or thoughts about this code."
+                    rows={4}
+                  />
+                </div>
+
+                <div className="flex justify-end">
+                  <div className="w-[220px]">
+                    <Btn onClick={handleNext}>
+                      {taskIndex + 1 >= tasks.length ? "Complete Study" : "Next Task →"}
+                    </Btn>
+                  </div>
+                </div>
+              </>
+            )}
+          </motion.div>
+        </AnimatePresence>
+      </main>
     </div>
   );
 }
@@ -423,20 +306,16 @@ function ProgressDots({
   reviewing: boolean;
 }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+    <div className="flex items-center gap-1.5">
       {Array.from({ length: total }).map((_, i) => {
         const done = i < current || (i === current && reviewing);
         const active = i === current && !reviewing;
         return (
           <div
             key={i}
-            style={{
-              height: "6px",
-              width: active ? "32px" : "8px",
-              borderRadius: "9999px",
-              backgroundColor: done ? "#16a34a" : active ? "#3b82f6" : "#374151",
-              transition: "background-color 0.25s ease",
-            }}
+            className={`h-1.5 rounded-full transition-all duration-300 ${active ? "w-8" : "w-2"} ${
+              done ? "bg-success" : active ? "bg-cosmoq-orange" : "bg-hairline-strong"
+            }`}
           />
         );
       })}
@@ -444,26 +323,72 @@ function ProgressDots({
   );
 }
 
+function Spinner({ className = "" }: { className?: string }) {
+  return (
+    <svg className={`h-4 w-4 animate-spin ${className}`} viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <circle cx="8" cy="8" r="6" stroke="currentColor" strokeOpacity="0.25" strokeWidth="2" />
+      <path d="M8 2a6 6 0 0 1 6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function Btn({
+  children,
+  onClick,
+  disabled,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="cosmoq-pill-orange min-h-[44px] w-full cursor-pointer rounded-full border border-transparent bg-oled-2 px-6 text-sm font-medium text-white transition-all duration-150 hover:bg-oled-3 active:scale-[0.97] disabled:cursor-not-allowed disabled:border-hairline disabled:bg-transparent disabled:text-ink-faint disabled:opacity-60 disabled:active:scale-100 disabled:shadow-none"
+    >
+      {children}
+    </button>
+  );
+}
+
+function Field({
+  id,
+  inputRef,
+  value,
+  onChange,
+  placeholder,
+  rows,
+}: {
+  id?: string;
+  inputRef?: React.Ref<HTMLTextAreaElement>;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  rows: number;
+}) {
+  return (
+    <textarea
+      id={id}
+      ref={inputRef}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      rows={rows}
+      className="w-full resize-none rounded-2xl border border-hairline-strong bg-oled-2 px-4 py-3 text-sm leading-relaxed text-ink outline-none transition-colors duration-150 placeholder:text-ink-faint focus:border-cosmoq-orange focus:ring-1 focus:ring-cosmoq-orange/40"
+    />
+  );
+}
+
 function EditorSkeleton() {
   return (
-    <div
-      style={{
-        backgroundColor: "#1e1e1e",
-        minHeight: "440px",
-        padding: "20px 24px",
-      }}
-    >
+    <div className="min-h-[440px] bg-[#0a0a0a] px-6 py-5">
       {[78, 62, 91, 54, 70, 45, 83, 58, 74, 49, 66, 38].map((w, i) => (
         <div
           key={i}
-          className="skeleton"
-          style={{
-            height: "14px",
-            width: `${w}%`,
-            borderRadius: "6px",
-            marginBottom: "10px",
-            animationDelay: `${i * 55}ms`,
-          }}
+          className="skeleton mb-2.5"
+          style={{ height: "14px", width: `${w}%`, borderRadius: "6px", animationDelay: `${i * 55}ms` }}
         />
       ))}
     </div>

@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxGraphModel dx="1422" dy="762" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="800" pageHeight="980" math="0" shadow="0">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+
+    <!-- Pipeline Context Bar -->
+    <mxCell id="2" value="Planner &nbsp;→&nbsp; &lt;b&gt;Threat Modeller&lt;/b&gt; &nbsp;→&nbsp; Code Generator &nbsp;→&nbsp; Code Reviewer &nbsp;→&nbsp; Verifier"
+      style="text;html=1;align=center;verticalAlign=middle;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;fontSize=12;fontStyle=0;"
+      vertex="1" parent="1">
+      <mxGeometry x="0" y="10" width="760" height="40" as="geometry" />
+    </mxCell>
+
+    <!-- INPUT: Coding Task -->
+    <mxCell id="3" value="&lt;b&gt;Coding Task&lt;/b&gt;"
+      style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;"
+      vertex="1" parent="1">
+      <mxGeometry x="60" y="80" width="200" height="55" as="geometry" />
+    </mxCell>
+
+    <!-- INPUT: Planner Output -->
+    <mxCell id="4" value="&lt;b&gt;Planner Output&lt;/b&gt;&lt;br&gt;scope &amp;nbsp;·&amp;nbsp; security requirements"
+      style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;"
+      vertex="1" parent="1">
+      <mxGeometry x="470" y="80" width="230" height="55" as="geometry" />
+    </mxCell>
+
+    <!-- RAG Branch Label -->
+    <mxCell id="5" value="&lt;b&gt;RAG Pipeline&lt;/b&gt;"
+      style="text;html=1;align=center;verticalAlign=middle;fontStyle=1;fontSize=12;fontColor=#6200ea;fillColor=none;strokeColor=none;"
+      vertex="1" parent="1">
+      <mxGeometry x="60" y="165" width="240" height="25" as="geometry" />
+    </mxCell>
+
+    <!-- MCP Branch Label -->
+    <mxCell id="6" value="&lt;b&gt;MCP Tool&lt;/b&gt;"
+      style="text;html=1;align=center;verticalAlign=middle;fontStyle=1;fontSize=12;fontColor=#b46504;fillColor=none;strokeColor=none;"
+      vertex="1" parent="1">
+      <mxGeometry x="460" y="420" width="220" height="25" as="geometry" />
+    </mxCell>
+
+    <!-- RAG STEP 1: Query Rewrite -->
+    <mxCell id="7" value="&lt;b&gt;Query Rewrite&lt;/b&gt;&lt;br&gt;GPT-4o expands task into&lt;br&gt;security search terms + domains"
+      style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;"
+      vertex="1" parent="1">
+      <mxGeometry x="60" y="200" width="240" height="65" as="geometry" />
+    </mxCell>
+
+    <!-- RAG STEP 2: ChromaDB -->
+    <mxCell id="8" value="&lt;b&gt;ChromaDB&lt;/b&gt;&lt;br&gt;MITRE CWE Top 25 corpus&lt;br&gt;cosine similarity · top-10 candidates"
+      style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;"
+      vertex="1" parent="1">
+      <mxGeometry x="60" y="320" width="240" height="70" as="geometry" />
+    </mxCell>
+
+    <!-- RAG STEP 3: LLM Re-rank -->
+    <mxCell id="9" value="&lt;b&gt;LLM Re-rank&lt;/b&gt;&lt;br&gt;GPT-4o selects top 3&lt;br&gt;most relevant CWEs"
+      style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;"
+      vertex="1" parent="1">
+      <mxGeometry x="60" y="445" width="240" height="60" as="geometry" />
+    </mxCell>
+
+    <!-- NVD STEP 1: NIST NVD API (same y as LLM Re-rank for horizontal dotted arrow) -->
+    <mxCell id="12" value="&lt;b&gt;NIST NVD API&lt;/b&gt;&lt;br&gt;via MCP stdio server&lt;br&gt;live government CVE database"
+      style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;"
+      vertex="1" parent="1">
+      <mxGeometry x="460" y="445" width="230" height="65" as="geometry" />
+    </mxCell>
+
+    <!-- RAG OUTPUT: Top 3 CWE Chunks -->
+    <mxCell id="10" value="&lt;b&gt;Top 3 CWE Chunks&lt;/b&gt;&lt;br&gt;descriptions · mitigations · examples"
+      style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;"
+      vertex="1" parent="1">
+      <mxGeometry x="60" y="565" width="240" height="55" as="geometry" />
+    </mxCell>
+
+    <!-- NVD OUTPUT: Recent CVEs -->
+    <mxCell id="13" value="&lt;b&gt;3 Recent CVEs&lt;/b&gt;&lt;br&gt;severity · CVSS score&lt;br&gt;CWE mapping · NVD link"
+      style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d6b656;fontSize=11;"
+      vertex="1" parent="1">
+      <mxGeometry x="460" y="565" width="230" height="60" as="geometry" />
+    </mxCell>
+
+    <!-- GPT-4o Synthesis -->
+    <mxCell id="14" value="&lt;b&gt;GPT-4o&lt;/b&gt; &amp;nbsp;·&amp;nbsp; temp: 0.2 &amp;nbsp;·&amp;nbsp; JSON mode&lt;br&gt;synthesises CWE context + CVEs + task + plan"
+      style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;"
+      vertex="1" parent="1">
+      <mxGeometry x="170" y="690" width="420" height="65" as="geometry" />
+    </mxCell>
+
+    <!-- OUTPUT: ThreatEntry List -->
+    <mxCell id="15" value="&lt;b&gt;ThreatEntry List&lt;/b&gt;&lt;br&gt;cwe_id &amp;nbsp;·&amp;nbsp; name &amp;nbsp;·&amp;nbsp; severity&lt;br&gt;task-specific description&lt;br&gt;actionable mitigation"
+      style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;fontSize=12;"
+      vertex="1" parent="1">
+      <mxGeometry x="220" y="820" width="320" height="85" as="geometry" />
+    </mxCell>
+
+    <!-- Next agent label -->
+    <mxCell id="16" value="↓ &amp;nbsp; Code Generator (next agent)"
+      style="text;html=1;align=center;verticalAlign=middle;fontSize=12;fontStyle=1;fillColor=none;strokeColor=none;"
+      vertex="1" parent="1">
+      <mxGeometry x="220" y="918" width="320" height="30" as="geometry" />
+    </mxCell>
+
+    <!-- ── ARROWS ── -->
+
+    <!-- Coding Task → Query Rewrite -->
+    <mxCell id="20" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" edge="1" source="3" target="7" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- Query Rewrite → ChromaDB -->
+    <mxCell id="21" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" edge="1" source="7" target="8" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- ChromaDB → LLM Re-rank -->
+    <mxCell id="22" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" edge="1" source="8" target="9" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- LLM Re-rank → CWE Chunks -->
+    <mxCell id="23" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" edge="1" source="9" target="10" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- LLM Re-rank → NIST NVD (DOTTED — top CWE as keyword) -->
+    <mxCell id="24" value="top CWE as keyword" style="edgeStyle=orthogonalEdgeStyle;dashed=1;strokeColor=#9673a6;fontColor=#9673a6;fontSize=10;rounded=0;" edge="1" source="9" target="12" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- NIST NVD → Recent CVEs -->
+    <mxCell id="25" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" edge="1" source="12" target="13" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- CWE Chunks → GPT-4o -->
+    <mxCell id="26" value="CWE context" style="edgeStyle=orthogonalEdgeStyle;rounded=0;fontSize=10;fontColor=#9673a6;" edge="1" source="10" target="14" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- Recent CVEs → GPT-4o -->
+    <mxCell id="27" value="CVE context" style="edgeStyle=orthogonalEdgeStyle;rounded=0;fontSize=10;fontColor=#b85450;" edge="1" source="13" target="14" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- Planner Output → GPT-4o -->
+    <mxCell id="28" value="plan + requirements" style="edgeStyle=orthogonalEdgeStyle;rounded=0;fontSize=10;fontColor=#6c8ebf;" edge="1" source="4" target="14" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- GPT-4o → ThreatEntry -->
+    <mxCell id="29" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" edge="1" source="14" target="15" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+  </root>
+</mxGraphModel>

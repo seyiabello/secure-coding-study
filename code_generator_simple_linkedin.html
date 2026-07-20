@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Code Generator — Simplified Architecture</title>
+<style>
+  body { background: #fff; margin: 0; padding: 20px; font-family: Arial, sans-serif; }
+  .canvas { position: relative; width: 700px; height: 630px; }
+
+  .box {
+    position: absolute;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 13px;
+    line-height: 1.65;
+    padding: 10px 14px;
+    box-sizing: border-box;
+  }
+
+  .pipeline-bar {
+    position: absolute; left: 0; top: 10px;
+    width: 700px; height: 40px;
+    background: #f5f5f5; border: 1px solid #888;
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; color: #333;
+  }
+
+  .input-box     { background: #dae8fc; border: 1.5px solid #6c8ebf; }
+  .assembly-box  { background: #fff2cc; border: 1.5px solid #d6b656; }
+  .hint-box      { background: #d5e8d4; border: 1.5px solid #82b366; justify-content: flex-start; padding-top: 14px; }
+  .on-demand-box { background: #ffe6cc; border: 1.5px solid #d79b00; justify-content: flex-start; padding-top: 14px; }
+  .output-box    { background: #f5f5f5; border: 1.5px solid #888; color: #333; font-size: 12px; }
+  .monaco-box    { background: #ffffff; border: 2px solid #374151; }
+
+  .hitl-container {
+    position: absolute;
+    border: 2.5px dashed #6c8ebf;
+    border-radius: 10px;
+    background: #f0f4ff;
+    box-sizing: border-box;
+  }
+
+  .hitl-label {
+    position: absolute;
+    font-size: 13px; font-weight: bold; color: #2d5099;
+    text-align: center;
+  }
+
+  .next-label {
+    position: absolute;
+    font-size: 14px; font-weight: bold; text-align: center; color: #333;
+  }
+
+  svg.arrows {
+    position: absolute; top: 0; left: 0;
+    width: 700px; height: 630px;
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+<div class="canvas">
+
+  <!-- Pipeline bar -->
+  <div class="pipeline-bar">
+    Planner &nbsp;→&nbsp; Threat Modeller &nbsp;→&nbsp; <b>Code Generator</b> &nbsp;→&nbsp; Code Reviewer &nbsp;→&nbsp; Verifier
+  </div>
+
+  <!-- INPUTS -->
+  <div class="box input-box" style="left:14px; top:64px; width:178px; height:64px;">
+    <b>Coding Task</b><br>raw participant input
+  </div>
+
+  <div class="box input-box" style="left:212px; top:64px; width:202px; height:64px;">
+    <b>Approved Plan</b><br>ordered steps &nbsp;·&nbsp; scope<br>security requirements
+  </div>
+
+  <div class="box input-box" style="left:434px; top:64px; width:252px; height:64px;">
+    <b>Approved Threat Model</b><br>CWE entries &nbsp;·&nbsp; severity<br>task-specific mitigations
+  </div>
+
+  <!-- Step Classifier -->
+  <div class="box assembly-box" style="left:42px; top:182px; width:616px; height:76px;">
+    <b>Step Classifier</b> &nbsp;·&nbsp; one GPT-4o call &nbsp;·&nbsp; temp 0.0<br>
+    Assigns a maximum hint level per plan step from threat mitigations<br>
+    Security mitigation steps → <b>Direction only</b> &nbsp;&nbsp;·&nbsp;&nbsp; Boilerplate → Full Code
+  </div>
+
+  <!-- HITL dashed container -->
+  <div class="hitl-container" style="left:8px; top:274px; width:684px; height:232px;"></div>
+
+  <!-- HITL header label -->
+  <div class="hitl-label" style="left:8px; top:281px; width:684px;">
+    HITL — Participant writes code &nbsp;·&nbsp; no agent generation
+  </div>
+
+  <!-- Left column: Tiered Hint System -->
+  <div class="box hint-box" style="left:22px; top:300px; width:192px; height:196px;">
+    <b>Tiered Hint System</b><br>
+    <span style="font-size:11px; color:#555;">sequential unlock · level capped per step</span>
+    <br><br>
+    1.&nbsp; Direction<br>
+    <span style="color:#5a9e5a; font-size:13px;">↓</span><br>
+    2.&nbsp; Pseudocode<br>
+    <span style="color:#5a9e5a; font-size:13px;">↓</span><br>
+    3.&nbsp; Partial Code<br>
+    <span style="color:#5a9e5a; font-size:13px;">↓</span><br>
+    4.&nbsp; Full Code
+  </div>
+
+  <!-- Centre: Monaco Editor -->
+  <div class="box monaco-box" style="left:232px; top:300px; width:248px; height:196px;">
+    <b style="font-size:15px;">Monaco Editor</b><br><br>
+    Participant writes<br>Python here<br><br>
+    <span style="color:#888; font-size:12px;">No LLM generation</span>
+  </div>
+
+  <!-- Right column: On-Demand Tools -->
+  <div class="box on-demand-box" style="left:498px; top:300px; width:186px; height:196px;">
+    <b>On-Demand AI Tools</b><br><br>
+    <b style="font-size:12px;">Adaptive Hint</b><br>
+    <span style="font-size:11px;">"What should I do next?"<br>Reads actual code<br>Infers done / missing / wrong</span>
+    <br><br>
+    <b style="font-size:12px;">Security Hint</b><br>
+    <span style="font-size:11px;">"Analyse Code"<br>Whole-code security pass<br>Flags top issue + CWE ref</span>
+  </div>
+
+  <!-- OUTPUTS -->
+  <div class="box output-box" style="left:8px; top:522px; width:158px; height:78px;">
+    <b>user_code</b><br>
+    participant-written Python<br>
+    → Code Reviewer scores this
+  </div>
+
+  <div class="box output-box" style="left:178px; top:522px; width:158px; height:78px;">
+    <b>annotations</b><br>
+    what code does<br>
+    threats addressed<br>
+    confidence (1–5)
+  </div>
+
+  <div class="box output-box" style="left:348px; top:522px; width:162px; height:78px;">
+    <b>hints_requested log</b><br>
+    step · level · timestamp<br>
+    research instrument
+  </div>
+
+  <div class="box output-box" style="left:522px; top:522px; width:170px; height:78px;">
+    <b>time_in_coding_s</b><br>
+    seconds in editor<br>
+    <b>pre_review_prediction</b><br>
+    expected CWE IDs
+  </div>
+
+  <!-- Next agent label -->
+  <div class="next-label" style="left:210px; top:610px; width:280px;">
+    ↓ &nbsp; Code Reviewer (next agent)
+  </div>
+
+  <!-- SVG ARROWS -->
+  <svg class="arrows" viewBox="0 0 700 630">
+    <defs>
+      <marker id="arr" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0,8 3,0 6" fill="#555"/>
+      </marker>
+      <marker id="arr-grn" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0,8 3,0 6" fill="#82b366"/>
+      </marker>
+      <marker id="arr-org" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0,8 3,0 6" fill="#d79b00"/>
+      </marker>
+    </defs>
+
+    <!-- Inputs → Step Classifier -->
+    <line x1="103" y1="128" x2="103" y2="180" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+    <line x1="313" y1="128" x2="313" y2="180" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+    <line x1="560" y1="128" x2="560" y2="180" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+
+    <!-- Step Classifier → HITL container -->
+    <line x1="350" y1="258" x2="350" y2="272" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+
+    <!-- Hint System → Monaco -->
+    <line x1="214" y1="398" x2="230" y2="398" stroke="#82b366" stroke-width="1.5" marker-end="url(#arr-grn)"/>
+
+    <!-- Monaco ↔ On-demand (bidirectional) -->
+    <line x1="480" y1="386" x2="496" y2="386" stroke="#d79b00" stroke-width="1.5" marker-end="url(#arr-org)"/>
+    <line x1="496" y1="410" x2="480" y2="410" stroke="#d79b00" stroke-width="1.5" marker-end="url(#arr-org)"/>
+
+    <!-- Monaco bottom → bus line → output boxes -->
+    <line x1="356" y1="496" x2="356" y2="511" stroke="#555" stroke-width="1.5"/>
+    <line x1="87"  y1="511" x2="607" y2="511" stroke="#555" stroke-width="1.5"/>
+    <line x1="87"  y1="511" x2="87"  y2="520" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+    <line x1="257" y1="511" x2="257" y2="520" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+    <line x1="429" y1="511" x2="429" y2="520" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+    <line x1="607" y1="511" x2="607" y2="520" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+
+    <!-- Outputs merge → Code Reviewer -->
+    <line x1="87"  y1="600" x2="87"  y2="616" stroke="#555" stroke-width="1.5"/>
+    <line x1="257" y1="600" x2="257" y2="616" stroke="#555" stroke-width="1.5"/>
+    <line x1="429" y1="600" x2="429" y2="616" stroke="#555" stroke-width="1.5"/>
+    <line x1="607" y1="600" x2="607" y2="616" stroke="#555" stroke-width="1.5"/>
+    <line x1="87"  y1="616" x2="607" y2="616" stroke="#555" stroke-width="1.5"/>
+    <line x1="350" y1="616" x2="350" y2="608" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+  </svg>
+
+</div>
+</body>
+</html>

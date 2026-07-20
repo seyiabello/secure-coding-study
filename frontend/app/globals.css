@@ -10,9 +10,11 @@
   --color-ink-secondary: #d1d5db;
   --color-ink-muted: #9ca3af;
   --color-ink-faint: #6b7280;
-  --color-signal: #3b82f6;
-  --color-signal-deep: #2563eb;
-  --color-signal-bright: #60a5fa;
+  /* Retinted green — scoped in practice to the multi-agent page's primary
+     actions/CWE tags, matching the orange + green condition-color pairing. */
+  --color-signal: #22c55e;
+  --color-signal-deep: #15803d;
+  --color-signal-bright: #4ade80;
   --color-success: #16a34a;
   --color-success-deep: #15803d;
   --color-success-surface: #052e16;
@@ -23,6 +25,39 @@
   --color-warning-surface: #422006;
   --color-warning-border: #854d0e;
   --color-warning-ink: #facc15;
+
+  /* ── AI-native / OLED layer, scoped to the multi-agent study UI ────────
+     Accent retinted to green (from an earlier violet) to match the
+     orange + green bright-color pairing used across the whole app. */
+  --color-oled: #000000;
+  --color-oled-1: #0a0a0d;
+  --color-oled-2: #101116;
+  --color-oled-3: #17181f;
+  --color-oled-4: #1e1f28;
+  --color-hairline: rgba(255, 255, 255, 0.07);
+  --color-hairline-strong: rgba(255, 255, 255, 0.14);
+  --color-hairline-top: rgba(255, 255, 255, 0.05);
+  --color-ai: #22c55e;
+  --color-ai-bright: #4ade80;
+  --color-ai-deep: #15803d;
+  --color-ai-surface: rgba(34, 197, 94, 0.1);
+  --color-ai-border: rgba(34, 197, 94, 0.3);
+
+  /* ── Cosmoq accent layer ────────────────────────────────────────────────
+     Bright orange + green pairing carried from the home page's aurora
+     background into the baseline (orange) and multi-agent (green)
+     conditions, so each condition reads as one color across every page. */
+  --color-cosmoq-blue: #0175ff;
+  --color-cosmoq-blue-bright: #7da4ff;
+  --color-cosmoq-blue-tint: rgba(125, 164, 255, 0.16);
+  --color-cosmoq-gold: #ffcd7d;
+  --color-cosmoq-amber: #ffb349;
+  --color-cosmoq-orange: #ff7a2e;
+  --color-cosmoq-orange-bright: #ffab73;
+  --color-cosmoq-orange-tint: rgba(255, 140, 60, 0.16);
+  --color-cosmoq-green: #22c55e;
+  --color-cosmoq-green-bright: #4ade80;
+  --color-cosmoq-green-tint: rgba(74, 222, 128, 0.16);
 }
 
 @theme inline {
@@ -68,5 +103,432 @@ body {
   .skeleton {
     animation: none;
     opacity: 0.6;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   AI-native OLED surface + dimensional layering system
+   Scoped via .oled-scope — used by the multi-agent study page only, so it
+   doesn't change the look of the home page or the baseline condition.
+   ════════════════════════════════════════════════════════════════════════ */
+
+.oled-scope {
+  background-color: var(--color-oled);
+  color: var(--color-ink);
+}
+
+/* Ambient AI glow wash — fixed, decorative, no motion by default.
+   Retinted green (from an earlier violet/blue) to match the orange +
+   green condition-color pairing: this is the multi-agent page's equivalent
+   of the home page's aurora background. */
+/* Tall side-column glow, same construction as the home page's
+   .aurora-columns (on-canvas ellipse centers, not off-canvas — a gradient
+   centered past the viewport edge burns off most of its falloff before it
+   ever becomes visible, which is why the first version of this was too
+   faint to see) — blurred for softness, high enough peak opacity to read
+   clearly in the wide side margins around the centered content column. */
+.oled-ambient {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 380px 100vh at 6% 45%, rgba(34, 197, 94, 0.4), transparent 65%),
+    radial-gradient(ellipse 400px 100vh at 94% 55%, rgba(74, 222, 128, 0.32), transparent 65%);
+  filter: blur(50px) saturate(1.15);
+}
+
+/* Same ambient wash, orange-toned — the baseline page's equivalent, so the
+   two conditions read as one color each across the whole app, not just on
+   the home page. */
+.oled-ambient-orange {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 380px 100vh at 6% 45%, rgba(255, 122, 46, 0.4), transparent 65%),
+    radial-gradient(ellipse 400px 100vh at 94% 55%, rgba(255, 171, 115, 0.32), transparent 65%);
+  filter: blur(50px) saturate(1.15);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .oled-ambient,
+  .oled-ambient-orange {
+    animation: ambient-drift 26s ease-in-out infinite alternate;
+  }
+}
+
+@keyframes ambient-drift {
+  0% {
+    background-position: 0% 0%, 0% 0%;
+  }
+  100% {
+    background-position: 3% 4%, -3% -3%;
+  }
+}
+
+/* Elevation scale — depth comes from lightness steps + hairline borders +
+   ambient shadow, since box-shadow alone is invisible against true black. */
+.elevate-1 {
+  background-color: var(--color-oled-1);
+  border: 1px solid var(--color-hairline);
+  box-shadow:
+    inset 0 1px 0 var(--color-hairline-top),
+    0 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+.elevate-2 {
+  background-color: var(--color-oled-2);
+  border: 1px solid var(--color-hairline-strong);
+  box-shadow:
+    inset 0 1px 0 var(--color-hairline-top),
+    0 10px 28px -12px rgba(0, 0, 0, 0.9);
+}
+
+.elevate-3 {
+  background-color: var(--color-oled-3);
+  border: 1px solid var(--color-ai-border);
+  box-shadow:
+    inset 0 1px 0 var(--color-hairline-top),
+    0 16px 40px -12px rgba(0, 0, 0, 0.9),
+    0 0 32px -10px rgba(34, 197, 94, 0.3);
+}
+
+.elevate-glass {
+  background-color: rgba(16, 17, 22, 0.72);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--color-hairline-strong);
+  box-shadow: inset 0 1px 0 var(--color-hairline-top);
+}
+
+/* Severity-tinted elevation for review findings — glow intensity signals risk */
+.elevate-critical {
+  background-color: var(--color-oled-2);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  box-shadow:
+    inset 0 1px 0 var(--color-hairline-top),
+    0 14px 36px -14px rgba(0, 0, 0, 0.9),
+    0 0 28px -8px rgba(239, 68, 68, 0.28);
+}
+
+.elevate-high {
+  background-color: var(--color-oled-2);
+  border: 1px solid rgba(249, 115, 22, 0.3);
+  box-shadow:
+    inset 0 1px 0 var(--color-hairline-top),
+    0 12px 32px -14px rgba(0, 0, 0, 0.9),
+    0 0 22px -8px rgba(249, 115, 22, 0.22);
+}
+
+.elevate-medium {
+  background-color: var(--color-oled-2);
+  border: 1px solid rgba(234, 179, 8, 0.26);
+  box-shadow:
+    inset 0 1px 0 var(--color-hairline-top),
+    0 10px 26px -14px rgba(0, 0, 0, 0.9);
+}
+
+.elevate-low {
+  background-color: var(--color-oled-2);
+  border: 1px solid var(--color-hairline-strong);
+  box-shadow:
+    inset 0 1px 0 var(--color-hairline-top),
+    0 8px 20px -14px rgba(0, 0, 0, 0.85);
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   Cosmoq-inspired surface treatment — scoped to the home page only via
+   .cosmoq-card / .cosmoq-pill*. Reuses the OLED canvas + hairline tokens
+   above; adds Cosmoq's 24px card radius, thin glass rim highlight, layered
+   soft elevation, and the dual-tone (blue + gold) inset "light source"
+   glow signature on the primary pill button.
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* Ambient background glow for the home page — cosmoq blue + gold wash */
+.cosmoq-ambient {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(700px 500px at 15% 0%, rgba(1, 117, 255, 0.09), transparent 65%),
+    radial-gradient(600px 400px at 85% 5%, rgba(255, 179, 73, 0.06), transparent 60%),
+    radial-gradient(800px 600px at 50% 100%, rgba(1, 117, 255, 0.05), transparent 70%);
+}
+
+.cosmoq-card {
+  background-color: var(--color-oled-1);
+  border: 1px solid var(--color-hairline-strong);
+  border-radius: 24px;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05),
+    0 0.83px 0.83px -0.75px rgba(0, 0, 0, 0.18),
+    0 2.26px 2.26px -1.5px rgba(0, 0, 0, 0.18),
+    0 4.96px 4.96px -2.25px rgba(0, 0, 0, 0.17),
+    0 11.01px 11.01px -3px rgba(0, 0, 0, 0.14),
+    0 28px 28px -3.75px rgba(0, 0, 0, 0.06);
+}
+
+.cosmoq-card-accent {
+  background-color: var(--color-oled-2);
+  border: 1px solid rgba(1, 117, 255, 0.22);
+  border-radius: 24px;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.07),
+    0 0.83px 0.83px -0.75px rgba(0, 0, 0, 0.18),
+    0 2.26px 2.26px -1.5px rgba(0, 0, 0, 0.18),
+    0 4.96px 4.96px -2.25px rgba(0, 0, 0, 0.17),
+    0 11.01px 11.01px -3px rgba(0, 0, 0, 0.14),
+    0 28px 28px -3.75px rgba(0, 0, 0, 0.06),
+    0 6px 24px 0 rgba(255, 179, 73, 0.12);
+}
+
+/* Signature Cosmoq pill CTA — fully rounded, dual-tone inset light-source glow.
+   Lights up on hover: Cosmoq's own button carries an (unused, static)
+   `filter: brightness(1)` in its markup — a hover brightness bump is the
+   logical interaction that implies, so it's added here. */
+.cosmoq-pill {
+  border-radius: 999px;
+  filter: brightness(1);
+  transition: filter 150ms ease, box-shadow 150ms ease;
+  box-shadow:
+    0 0.83px 0.83px -0.75px rgba(0, 0, 0, 0.18),
+    0 2.26px 2.26px -1.5px rgba(0, 0, 0, 0.18),
+    0 4.96px 4.96px -2.25px rgba(0, 0, 0, 0.17),
+    0 11.01px 11.01px -3px rgba(0, 0, 0, 0.14),
+    0 28px 28px -3.75px rgba(0, 0, 0, 0.06),
+    inset -4px 3px 9px rgba(1, 117, 255, 0.9),
+    inset 3px -2px 8px rgba(255, 205, 125, 0.85);
+}
+
+.cosmoq-pill:hover {
+  filter: brightness(1.18);
+  box-shadow:
+    0 0.83px 0.83px -0.75px rgba(0, 0, 0, 0.18),
+    0 2.26px 2.26px -1.5px rgba(0, 0, 0, 0.18),
+    0 4.96px 4.96px -2.25px rgba(0, 0, 0, 0.17),
+    0 11.01px 11.01px -3px rgba(0, 0, 0, 0.14),
+    0 28px 28px -3.75px rgba(0, 0, 0, 0.06),
+    0 0 22px 2px rgba(255, 179, 73, 0.35),
+    inset -4px 3px 9px rgba(1, 117, 255, 1),
+    inset 3px -2px 8px rgba(255, 205, 125, 1);
+}
+
+.cosmoq-pill-ghost {
+  border-radius: 999px;
+  transition: box-shadow 150ms ease, background-color 150ms ease;
+  box-shadow: inset 0 0 0 1px var(--color-hairline-strong);
+}
+
+.cosmoq-pill-ghost:hover {
+  box-shadow: inset 0 0 0 1px var(--color-hairline-strong), 0 0 16px 1px rgba(255, 255, 255, 0.12);
+}
+
+/* Part-dark / part-colorful card treatment — Cosmoq's cards are a dark
+   frame with a vivid gradient glow washing one corner rather than a flat
+   fill. `.cosmoq-card-orange` / `.cosmoq-card-green` reuse `.cosmoq-card`'s
+   shadow stack and add that corner wash, tinted per condition. */
+.cosmoq-card-orange {
+  position: relative;
+  background-color: var(--color-oled-1);
+  border: 1px solid rgba(255, 122, 46, 0.22);
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05),
+    0 0.83px 0.83px -0.75px rgba(0, 0, 0, 0.18),
+    0 2.26px 2.26px -1.5px rgba(0, 0, 0, 0.18),
+    0 4.96px 4.96px -2.25px rgba(0, 0, 0, 0.17),
+    0 11.01px 11.01px -3px rgba(0, 0, 0, 0.14),
+    0 28px 28px -3.75px rgba(0, 0, 0, 0.06),
+    0 6px 24px 0 rgba(255, 122, 46, 0.12);
+}
+
+.cosmoq-card-orange::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(420px 240px at 100% 0%, rgba(255, 122, 46, 0.22), transparent 62%);
+}
+
+.cosmoq-card-green {
+  position: relative;
+  background-color: var(--color-oled-1);
+  border: 1px solid rgba(34, 197, 94, 0.22);
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05),
+    0 0.83px 0.83px -0.75px rgba(0, 0, 0, 0.18),
+    0 2.26px 2.26px -1.5px rgba(0, 0, 0, 0.18),
+    0 4.96px 4.96px -2.25px rgba(0, 0, 0, 0.17),
+    0 11.01px 11.01px -3px rgba(0, 0, 0, 0.14),
+    0 28px 28px -3.75px rgba(0, 0, 0, 0.06),
+    0 6px 24px 0 rgba(34, 197, 94, 0.12);
+}
+
+.cosmoq-card-green::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(420px 240px at 100% 0%, rgba(34, 197, 94, 0.22), transparent 62%);
+}
+
+.cosmoq-card-orange > *,
+.cosmoq-card-green > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Composable corner-glow wash — same part-dark/part-colorful idea as
+   .cosmoq-card-orange/-green, but stackable onto the .elevate-* boxes used
+   on the multi-agent page instead of duplicating each elevation variant. */
+.accent-wash-orange,
+.accent-wash-green {
+  position: relative;
+  overflow: hidden;
+}
+
+.accent-wash-orange::before,
+.accent-wash-green::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.accent-wash-orange::before {
+  background: radial-gradient(320px 180px at 100% 0%, rgba(255, 122, 46, 0.16), transparent 62%);
+}
+
+.accent-wash-green::before {
+  background: radial-gradient(320px 180px at 100% 0%, rgba(34, 197, 94, 0.16), transparent 62%);
+}
+
+.accent-wash-orange > *,
+.accent-wash-green > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Orange/green condition-accent pill variants — same light-up-on-hover
+   behavior as .cosmoq-pill, tinted per condition instead of the blue+gold
+   signature glow (which stays reserved for the primary home-page CTA). */
+.cosmoq-pill-orange {
+  border-radius: 999px;
+  filter: brightness(1);
+  transition: filter 150ms ease, box-shadow 150ms ease;
+  box-shadow:
+    0 4px 14px 0 rgba(0, 0, 0, 0.3),
+    inset 0 0 0 1px rgba(255, 122, 46, 0.4);
+}
+.cosmoq-pill-orange:hover {
+  filter: brightness(1.15);
+  box-shadow:
+    0 4px 14px 0 rgba(0, 0, 0, 0.3),
+    0 0 20px 2px rgba(255, 122, 46, 0.45),
+    inset 0 0 0 1px rgba(255, 171, 115, 0.7);
+}
+
+.cosmoq-pill-green {
+  border-radius: 999px;
+  filter: brightness(1);
+  transition: filter 150ms ease, box-shadow 150ms ease;
+  box-shadow:
+    0 4px 14px 0 rgba(0, 0, 0, 0.3),
+    inset 0 0 0 1px rgba(34, 197, 94, 0.4);
+}
+.cosmoq-pill-green:hover {
+  filter: brightness(1.15);
+  box-shadow:
+    0 4px 14px 0 rgba(0, 0, 0, 0.3),
+    0 0 20px 2px rgba(34, 197, 94, 0.45),
+    inset 0 0 0 1px rgba(74, 222, 128, 0.7);
+}
+
+/* Micro-interaction keyframes */
+@keyframes stage-glow-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.35); }
+  50% { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+}
+
+.stage-pulse {
+  animation: stage-glow-pulse 1.8s ease-out infinite;
+}
+
+@keyframes check-pop {
+  0% { transform: scale(0.5); opacity: 0; }
+  60% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.check-pop {
+  animation: check-pop 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .oled-ambient,
+  .oled-ambient-orange {
+    animation: none;
+  }
+  .stage-pulse {
+    animation: none;
+  }
+  .check-pop {
+    animation: none;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   Home page aurora + card animations
+   Used by the landing page visual backgrounds only — not design-system
+   tokens; these are decorative gradient/particle values.
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* Aurora column slow breathing */
+@keyframes aurora-shift {
+  0%   { opacity: 0.82; transform: scaleX(1)    translateY(0px); }
+  50%  { opacity: 1;    transform: scaleX(1.04) translateY(-8px); }
+  100% { opacity: 0.88; transform: scaleX(0.97) translateY(4px); }
+}
+
+.aurora-columns {
+  background:
+    /* Bottom warm sunrise pool */
+    radial-gradient(ellipse 90% 62% at 44% 110%, rgb(255,88,5) 0%, rgba(240,62,5,0.7) 30%, transparent 60%),
+    /* Left narrow core beam */
+    radial-gradient(ellipse 105px 100vh at 19% 52%, rgba(255,52,16,0.88) 0%, transparent 56%),
+    /* Left wide orange column */
+    radial-gradient(ellipse 260px 100vh at 23% 52%, rgba(235,68,12,0.78) 0%, rgba(215,58,8,0.42) 40%, transparent 65%),
+    /* Right narrow green core beam */
+    radial-gradient(ellipse 115px 100vh at 70% 52%, rgba(22,197,94,0.88) 0%, transparent 54%),
+    /* Right wide green column */
+    radial-gradient(ellipse 300px 100vh at 72% 52%, rgba(21,175,90,0.75) 0%, rgba(30,140,80,0.44) 40%, transparent 65%),
+    /* Top-right green cap */
+    radial-gradient(ellipse 440px 560px at 90% 10%, rgba(30,160,100,0.55) 0%, transparent 54%);
+  filter: blur(48px) saturate(1.15);
+  animation: aurora-shift 12s ease-in-out infinite alternate;
+  will-change: opacity, transform;
+}
+
+/* Particle streak on Baseline card */
+@keyframes streak {
+  0%   { opacity: 0;    transform: translateX(-12px) scale(0.6); }
+  20%  { opacity: 0.9; }
+  60%  { opacity: 0.85; transform: translateX(0px)   scale(1); }
+  80%  { opacity: 0.7; }
+  100% { opacity: 0;    transform: translateX(10px)  scale(0.7); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora-columns {
+    animation: none;
   }
 }

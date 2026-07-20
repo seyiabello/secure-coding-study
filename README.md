@@ -43,6 +43,12 @@ The proposal showed a hub-and-spoke diagram. The implementation is different: a 
 
 ![System architecture](docs/architecture.svg)
 
+### Platform and DevOps architecture
+
+![Platform and DevOps architecture](screenshots/securecodingstudyarchitecture.PNG)
+
+The platform architecture covers the full deployment stack: source control and CI/CD via GitHub Actions, containerised backend on Azure Container Instances pulling from Azure Container Registry with a user-assigned managed identity, persistent file shares for logs and the ChromaDB vector store, Terraform remote state in a bootstrap storage account, and the Next.js frontend deployed on Vercel.
+
 The baseline is a single GPT-4o call sitting outside this pipeline: a three-line, security-free prompt, one response, nothing else.
 
 ---

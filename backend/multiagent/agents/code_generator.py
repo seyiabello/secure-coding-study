@@ -70,7 +70,7 @@ def _format_threats(threats: list[ThreatEntry]) -> str:
     blocks = []
     for t in threats:
         blocks.append(
-            f"[{t['cwe_id']} — {t['name']} — {t['severity']}]\n"
+            f"[{t['cwe_id']}: {t['name']} ({t['severity']})\n"
             f"  What: {t['description']}\n"
             f"  Mitigation: {t['mitigation']}"
         )
@@ -117,7 +117,7 @@ def _build_step_context(state: AgentState, step_index: int) -> str:
         f"TASK: {task}\n\n"
         f"CURRENT STEP (step {step_index + 1}): {step_text}\n\n"
         f"PRIOR STEPS (already implemented):\n{prior_steps}\n\n"
-        f"LATER STEPS (not yet — do not hint at these):\n{later_steps}\n\n"
+        f"LATER STEPS (not yet, do not hint at these):\n{later_steps}\n\n"
         f"THREAT MODEL:\n{threats_text}"
     )
 
@@ -142,11 +142,11 @@ Your response for this step:
 - State in plain English what this step requires the developer to implement
 - Explain WHY this step is necessary and how it fits into the overall function
 - If this step touches security-critical logic, state the relevant CWE in one sentence
-  and what to be careful about — but do NOT describe how to implement the security fix
+  and what to be careful about, but do NOT describe how to implement the security fix
 
 Rules:
 - NO code. NO pseudocode. Plain English only.
-- Scope strictly to this one step — ignore what comes after.
+- Scope strictly to this one step. Ignore what comes after.
 - 3 to 5 sentences for the direction. 1 sentence for the security note.
 
 Respond with valid JSON only:
@@ -161,20 +161,20 @@ You are a coding mentor helping a developer write secure Python code one step at
 The developer needs a pseudocode skeleton for ONE specific step. Scope to THIS step only.
 
 Generate a Python comment-only pseudocode skeleton for this step:
-- Use only # comment lines — zero executable code
-- Cover only what this step needs to do — do not bleed into adjacent steps
+- Use only # comment lines. Zero executable code.
+- Cover only what this step needs to do. Do not bleed into adjacent steps.
 - If the step has security-critical work, name the CWE but do NOT describe the implementation
 - Include a "security: [CWE-XX]" sub-comment for any security-sensitive action
 
 Good example (for a "query the database" step):
 # 3. Query the database for the given username
 #    - Use the cursor to run the SELECT query
-#    - security: [CWE-89] use parameterised form — do NOT build the query string manually
+#    - security: [CWE-89] use parameterised form. Do NOT build the query string manually.
 #    - Fetch one row
 
 Rules:
 - Comment lines only. No executable Python.
-- Strictly scoped to this step — no code for other steps.
+- Strictly scoped to this step. No code for other steps.
 
 Respond with valid JSON only:
 {
@@ -186,19 +186,19 @@ Respond with valid JSON only:
 You are a coding mentor helping a developer write secure Python code one step at a time.
 
 The developer needs partial implementation for ONE specific step. This step is NOT
-security-critical — but it may still have security-adjacent elements to be careful about.
+security-critical, but it may still have security-adjacent elements to be careful about.
 
 Generate partial Python code for this step only:
 - INCLUDE: structural scaffolding, safe operations, variable assignments, type checks
   that are clearly not the security-critical part
 - OMIT with # TODO markers: any logic that touches security-sensitive areas,
-  even if this step is "partial" — the developer must write those parts
+  even if this step is "partial". The developer must write those parts.
 - Each TODO must state what is needed and reference the relevant CWE if applicable
 
 TODO format:
     # TODO [CWE-XX]: brief description of what the developer must implement here
 
-Scope strictly to this step — do not generate code for other steps.
+Scope strictly to this step. Do not generate code for other steps.
 
 Respond with valid JSON only:
 {
@@ -210,7 +210,7 @@ Respond with valid JSON only:
 You are a coding mentor helping a developer write secure Python code one step at a time.
 
 The developer needs the full implementation for ONE specific step. This is a boilerplate
-or setup step with no security-critical decisions — the security work happens elsewhere.
+or setup step with no security-critical decisions. The security work happens elsewhere.
 
 Generate complete Python code for this step only:
 - Complete and correct for just this step
@@ -245,7 +245,7 @@ You will receive:
 
 Your job:
 1. Identify which plan steps appear to be complete in the code
-2. Identify the single most useful next action for the developer — either:
+2. Identify the single most useful next action for the developer:
    a. The next step they should implement (if they're working in order)
    b. A correction to something they've started but done incorrectly
    c. A missing security measure they've skipped
@@ -254,7 +254,7 @@ Rules:
 - ONE focused suggestion. Not a comprehensive review.
 - Reference the specific step number from the plan.
 - If you spot a security issue, name the CWE and explain the concern concisely.
-  Do NOT provide the fix — describe what needs attention.
+  Do NOT provide the fix. Describe what needs attention.
 - If the code looks complete for all steps, say so and prompt them to review
   the threat model before submitting.
 - If the code is too short to evaluate meaningfully, say what the next step is.
@@ -278,13 +278,13 @@ You are a real-time security reviewer watching a developer write Python code.
 You will receive the task, the threat model, and the developer's current partial code.
 
 Your job:
-1. Identify the single most important security issue in the current code —
+1. Identify the single most important security issue in the current code:
    something that is wrong, missing, or about to go wrong given the threat model.
 2. If the code is clean so far, identify the most critical security measure
    the developer still needs to implement.
 
 Rules:
-- ONE issue only — the most pressing one.
+- ONE issue only. The most pressing one.
 - One sentence naming the issue. One sentence suggesting what to check or do.
 - Do NOT rewrite the code. Do NOT give a full solution.
 - If the code is too short or empty to evaluate, return has_issue: false.

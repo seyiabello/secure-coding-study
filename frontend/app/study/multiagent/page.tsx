@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
+import { AnimatePresence, motion, type Variants } from "motion/react";
 import {
   fetchShuffledTasks,
   startSession,
@@ -21,12 +22,17 @@ import {
   type HintLevel,
   type StepHintCap,
 } from "@/lib/api";
-import { FocusInput, PrimaryButton } from "@/app/page";
 
 const MonacoEditor = dynamic(() => import("@monaco-editor/react"), {
   ssr: false,
   loading: () => <EditorSkeleton />,
 });
+
+const EASE_OUT: [number, number, number, number] = [0.16, 1, 0.3, 1];
+const EASE_IN: [number, number, number, number] = [0.4, 0, 1, 1];
+// Critically-damped spring — matches the no-overshoot settle-in feel extracted from
+// cosmoq.framer.website's load-in animation (see frontend/docs/COSMOQ_INTERACTIONS.md).
+const SPRING_SETTLE = { type: "spring", stiffness: 130, damping: 20, mass: 1 } as const;
 
 /* ── Types ───────────────────────────────────────────────────────────────── */
 
@@ -63,6 +69,31 @@ function stageIndex(s: UIStage) {
 function now() {
   return new Date().toISOString();
 }
+
+/* ── Motion variants — micro-interactions for HITL stage transitions ───────
+   Exit is deliberately faster than enter: it keeps the pipeline feeling
+   responsive while giving each new stage room to settle in. ── */
+
+const stageVariants: Variants = {
+  initial: { opacity: 0, y: 14, scale: 0.99 },
+  animate: { opacity: 1, y: 0, scale: 1, transition: SPRING_SETTLE },
+  exit: { opacity: 0, y: -8, scale: 0.99, transition: { duration: 0.16, ease: EASE_IN } },
+};
+
+const revealVariants: Variants = {
+  initial: { opacity: 0, y: 8, scale: 0.97 },
+  animate: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.26, ease: EASE_OUT } },
+  exit: { opacity: 0, y: -4, scale: 0.98, transition: { duration: 0.14, ease: EASE_IN } },
+};
+
+const staggerContainer: Variants = {
+  animate: { transition: { staggerChildren: 0.06 } },
+};
+
+const staggerItem: Variants = {
+  initial: { opacity: 0, y: 14, scale: 0.98 },
+  animate: { opacity: 1, y: 0, scale: 1, transition: SPRING_SETTLE },
+};
 
 /* ── Page ────────────────────────────────────────────────────────────────── */
 
@@ -155,7 +186,7 @@ export default function MultiAgentPage() {
     await callResume(
       { plan_decision: { action, revised_content: revision ?? null, timestamp: now() } },
       action === "approve"
-        ? "Threat Modeller is querying NIST NVD — this can take 20–40 seconds…"
+        ? "Threat Modeller is querying NIST NVD. This can take 20 to 40 seconds…"
         : "Planner is revising the plan…"
     );
   }
@@ -249,14 +280,22 @@ export default function MultiAgentPage() {
 
   if (uiStage === "all_complete") {
     return (
-      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "48px 24px", backgroundColor: "#030712" }}>
-        <div style={{ textAlign: "center", maxWidth: "420px" }}>
-          <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: "52px", height: "52px", borderRadius: "50%", backgroundColor: "#052e16", border: "1px solid #15803d", marginBottom: "24px" }}>
-            <svg width="22" height="22" viewBox="0 0 20 20" fill="none"><path d="M4 10l4.5 4.5L16 6" stroke="#86efac" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+      <div className="oled-scope relative flex min-h-screen items-center justify-center px-6 py-12">
+        <div className="oled-ambient" />
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: EASE_OUT }}
+          className="relative z-10 max-w-[420px] text-center"
+        >
+          <div className="check-pop mx-auto mb-6 flex h-[52px] w-[52px] items-center justify-center rounded-full border border-success bg-success-surface">
+            <svg width="22" height="22" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+              <path d="M4 10l4.5 4.5L16 6" stroke="#86efac" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
           </div>
-          <h1 style={{ fontSize: "22px", fontWeight: "700", color: "#f3f4f6", margin: "0 0 10px" }}>All {tasks.length} tasks complete</h1>
-          <p style={{ fontSize: "15px", color: "#9ca3af", margin: 0 }}>Thank you for participating. You may now close this browser tab.</p>
-        </div>
+          <h1 className="mb-2.5 text-xl font-medium tracking-[-0.4px] text-ink">All {tasks.length} tasks complete</h1>
+          <p className="text-[15px] text-ink-muted">Thank you for participating. You may now close this browser tab.</p>
+        </motion.div>
       </div>
     );
   }
@@ -265,53 +304,55 @@ export default function MultiAgentPage() {
   const threats = (agentState.threats ?? []) as ThreatEntry[];
   const findings = (agentState.review_findings ?? []) as ReviewFinding[];
 
+  const pillActive =
+    uiStage === "task_complete"
+      ? STAGE_LABELS.length
+      : uiStage === "processing" || uiStage === "finalizing"
+      ? processingPill ?? 0
+      : stageIndex(uiStage);
+
   return (
-    <div style={{ minHeight: "100vh", backgroundColor: "#030712" }}>
+    <div className="oled-scope relative min-h-screen">
+      <div className="oled-ambient" />
 
       {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <header style={{ position: "sticky", top: 0, zIndex: 10, backgroundColor: "#111827", borderBottom: "1px solid #1f2937" }}>
-        <div style={{ maxWidth: "1080px", margin: "0 auto", padding: "12px 32px" }}>
+      <header className="elevate-glass sticky top-0 z-20 border-b border-hairline">
+        <div className="mx-auto max-w-[1080px] px-6 py-3">
           {/* Row 1: task progress + pid */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+          <div className="mb-2.5 flex items-center justify-between">
+            <div className="flex items-center gap-3.5">
               <ProgressDots total={tasks.length || 4} current={taskIndex} done={uiStage === "task_complete"} />
-              <span style={{ fontSize: "14px", fontWeight: "500", color: "#d1d5db" }}>
+              <span className="text-sm font-medium text-ink-secondary">
                 {tasks.length > 0 ? `Task ${taskIndex + 1} of ${tasks.length}` : "Loading…"}
               </span>
             </div>
-            {participantId && <span style={{ fontFamily: "monospace", fontSize: "12px", color: "#6b7280" }}>{participantId}</span>}
+            {participantId && <span className="font-mono text-xs text-ink-faint">{participantId}</span>}
           </div>
+
           {/* Row 2: stage pills */}
-          <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+          <div className="flex items-center gap-1">
             {STAGE_LABELS.map((label, i) => {
-              const allDone = uiStage === "task_complete";
-              let isDone = false;
-              let isActive = false;
-              if (allDone) {
-                isDone = true;
-              } else if (uiStage === "processing" || uiStage === "finalizing") {
-                const active = processingPill ?? 0;
-                isDone = i < active;
-                isActive = i === active;
-              } else {
-                const idx = stageIndex(uiStage);
-                isDone = idx > i;
-                isActive = idx === i;
-              }
+              const isDone = uiStage === "task_complete" ? true : pillActive > i;
+              const isActive = uiStage === "task_complete" ? false : pillActive === i;
               return (
-                <div key={label} style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                  <span style={{
-                    fontSize: "12px", fontWeight: "500", padding: "2px 10px", borderRadius: "9999px",
-                    backgroundColor: isDone ? "#052e16" : isActive ? "#1e3a5f" : "transparent",
-                    color: isDone ? "#86efac" : isActive ? "#60a5fa" : "#6b7280",
-                    border: `1px solid ${isDone ? "#15803d" : isActive ? "#2563eb" : "#1f2937"}`,
-                    transition: "all 0.2s ease",
-                  }}>
-                    {isDone ? "✓ " : ""}{label}
+                <div key={label} className="flex items-center gap-1">
+                  <span
+                    className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors duration-300 ${
+                      isDone
+                        ? "border-success-deep/60 bg-success-surface text-success-ink"
+                        : isActive
+                        ? "stage-pulse border-ai-border bg-ai-surface text-ai-bright"
+                        : "border-hairline bg-transparent text-ink-faint"
+                    }`}
+                  >
+                    {isDone && (
+                      <span key={`done-${label}`} className="check-pop inline-block">
+                        ✓
+                      </span>
+                    )}
+                    {label}
                   </span>
-                  {i < STAGE_LABELS.length - 1 && (
-                    <span style={{ color: "#374151", fontSize: "12px" }}>›</span>
-                  )}
+                  {i < STAGE_LABELS.length - 1 && <span className="text-xs text-ink-faint">›</span>}
                 </div>
               );
             })}
@@ -320,117 +361,300 @@ export default function MultiAgentPage() {
       </header>
 
       {/* ── Content ────────────────────────────────────────────────────────── */}
-      <main style={{ maxWidth: "1080px", margin: "0 auto", padding: "32px 32px 80px" }}>
+      <main className="relative z-10 mx-auto max-w-[1080px] px-6 pb-20 pt-8">
 
         {/* Error banner */}
         {apiError && (
-          <div style={{ backgroundColor: "#450a0a", border: "1px solid #991b1b", borderRadius: "12px", padding: "16px 20px", marginBottom: "20px", display: "flex", gap: "12px", alignItems: "flex-start" }}>
-            <span style={{ fontWeight: "700", color: "#f87171", flexShrink: 0 }}>✕</span>
-            <p style={{ fontSize: "14px", color: "#f87171", margin: 0, flex: 1 }}>{apiError}</p>
-            <button onClick={() => setApiError(null)} style={{ fontSize: "12px", color: "#9ca3af", background: "none", border: "none", cursor: "pointer" }}>dismiss</button>
+          <div className="mb-5 flex items-start gap-3 rounded-xl border border-danger-border/60 bg-danger-surface/70 px-5 py-4">
+            <span className="flex-shrink-0 font-bold text-danger-ink">✕</span>
+            <p className="flex-1 text-sm text-danger-ink">{apiError}</p>
+            <button onClick={() => setApiError(null)} className="cursor-pointer text-xs text-ink-muted hover:text-ink-secondary">
+              dismiss
+            </button>
           </div>
         )}
 
         {/* Task description (shown in all stages) */}
         {currentTask && (
-          <div style={{ backgroundColor: "#111827", border: "1px solid #1f2937", borderRadius: "12px", padding: "20px 24px", marginBottom: "20px" }}>
-            <p style={{ fontSize: "11px", fontWeight: "500", textTransform: "uppercase", letterSpacing: "0.07em", color: "#6b7280", margin: "0 0 10px" }}>Task</p>
-            <p style={{ fontSize: "15px", lineHeight: "1.7", color: "#d1d5db", margin: 0, maxWidth: "72ch" }}>{currentTask.text}</p>
+          <div className="elevate-1 accent-wash-green mb-5 rounded-xl p-6">
+            <p className="mb-2.5 text-[11px] font-semibold uppercase tracking-wider text-ink-faint">Task</p>
+            <p className="max-w-[72ch] text-base leading-relaxed tracking-[-0.48px] text-ink-secondary">{currentTask.text}</p>
           </div>
         )}
 
-        {/* Loading / processing */}
-        {(uiStage === "loading" || uiStage === "starting" || uiStage === "processing" || uiStage === "finalizing") && (
-          <ProcessingCard label={
-            uiStage === "finalizing" ? "Code Reviewer is running…" :
-            uiStage === "starting" || uiStage === "processing" ? processingLabel : "Loading…"
-          } />
-        )}
+        {/* Stage content — every HITL transition gets a settle-in / quick-exit micro-interaction */}
+        <AnimatePresence mode="wait">
+          <motion.div key={uiStage} variants={stageVariants} initial="initial" animate="animate" exit="exit">
+            {(uiStage === "loading" || uiStage === "starting" || uiStage === "processing" || uiStage === "finalizing") && (
+              <ProcessingCard
+                label={
+                  uiStage === "finalizing"
+                    ? "Code Reviewer is running…"
+                    : uiStage === "starting" || uiStage === "processing"
+                    ? processingLabel
+                    : "Loading…"
+                }
+              />
+            )}
 
-        {/* ── Plan Review ──────────────────────────────────────────────────── */}
-        {uiStage === "plan_review" && agentState.plan && (
-          <PlanReview plan={agentState.plan} history={planHistory} onDecide={handlePlanDecision} />
-        )}
+            {uiStage === "plan_review" && agentState.plan && (
+              <PlanReview plan={agentState.plan} history={planHistory} onDecide={handlePlanDecision} />
+            )}
 
-        {/* ── Threat Review ────────────────────────────────────────────────── */}
-        {uiStage === "threat_review" && threats.length > 0 && (
-          <ThreatReview threats={threats} plan={agentState.plan ?? null} onDecide={handleThreatDecision} />
-        )}
+            {uiStage === "threat_review" && threats.length > 0 && (
+              <ThreatReview threats={threats} plan={agentState.plan ?? null} onDecide={handleThreatDecision} />
+            )}
 
-        {/* ── Coding Stage ─────────────────────────────────────────────────── */}
-        {uiStage === "coding" && threadId && (
-          <CodingStage
-            threadId={threadId}
-            code={code}
-            onCodeChange={setCode}
-            plan={agentState.plan ?? null}
-            threats={threats}
-            showGate={showGate}
-            onShowGate={() => setShowGate(true)}
-            whatCodeDoes={whatCodeDoes}
-            onWhatCodeDoes={setWhatCodeDoes}
-            threatsAddressed={threatsAddressed}
-            onThreatsAddressed={setThreatsAddressed}
-            confidence={confidence}
-            onConfidence={setConfidence}
-            predictions={predictions}
-            onPredictions={setPredictions}
-            onFinalize={handleFinalize}
-          />
-        )}
+            {uiStage === "coding" && threadId && (
+              <CodingStage
+                threadId={threadId}
+                code={code}
+                onCodeChange={setCode}
+                plan={agentState.plan ?? null}
+                threats={threats}
+                showGate={showGate}
+                onShowGate={() => setShowGate(true)}
+                whatCodeDoes={whatCodeDoes}
+                onWhatCodeDoes={setWhatCodeDoes}
+                threatsAddressed={threatsAddressed}
+                onThreatsAddressed={setThreatsAddressed}
+                confidence={confidence}
+                onConfidence={setConfidence}
+                predictions={predictions}
+                onPredictions={setPredictions}
+                onFinalize={handleFinalize}
+              />
+            )}
 
-        {/* ── Code Review ──────────────────────────────────────────────────── */}
-        {uiStage === "code_review" && (
-          <CodeReview
-            findings={findings}
-            predictionAccuracy={agentState.prediction_accuracy ?? null}
-            plan={agentState.plan ?? null}
-            threats={threats}
-            code={code}
-            onAcknowledge={handleReviewAcknowledge}
-            onRevise={handleRevise}
-          />
-        )}
+            {uiStage === "code_review" && (
+              <CodeReview
+                findings={findings}
+                predictionAccuracy={agentState.prediction_accuracy ?? null}
+                plan={agentState.plan ?? null}
+                threats={threats}
+                code={code}
+                onAcknowledge={handleReviewAcknowledge}
+                onRevise={handleRevise}
+              />
+            )}
 
-        {/* ── Agent error ──────────────────────────────────────────────────── */}
-        {uiStage === "agent_error" && (
-          <AgentError
-            message={agentState.error ?? "An agent failed to complete."}
-            onRetry={() => {
-              setAgentState({});
-              setThreadId(null);
-              setUiStage("starting");
-            }}
-          />
-        )}
+            {uiStage === "agent_error" && (
+              <AgentError
+                message={agentState.error ?? "An agent failed to complete."}
+                onRetry={() => {
+                  setAgentState({});
+                  setThreadId(null);
+                  setUiStage("starting");
+                }}
+              />
+            )}
 
-        {/* ── Task complete ─────────────────────────────────────────────────── */}
-        {uiStage === "task_complete" && (
-          <TaskComplete
-            taskIndex={taskIndex}
-            totalTasks={tasks.length}
-            onNext={handleNextTask}
-          />
-        )}
+            {uiStage === "task_complete" && (
+              <TaskComplete taskIndex={taskIndex} totalTasks={tasks.length} onNext={handleNextTask} />
+            )}
+          </motion.div>
+        </AnimatePresence>
       </main>
     </div>
   );
 }
 
-/* ── Sub-components ──────────────────────────────────────────────────────── */
+/* ── Icons — SVG only, no emoji-as-icon ──────────────────────────────────── */
+
+function SparkleIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 16 16" fill="currentColor" className={className} aria-hidden="true">
+      <path d="M8 1.2c.2 0 .38.14.43.34l.9 3.5a2.6 2.6 0 0 0 1.87 1.87l3.5.9a.45.45 0 0 1 0 .86l-3.5.9a2.6 2.6 0 0 0-1.87 1.87l-.9 3.5a.45.45 0 0 1-.86 0l-.9-3.5a2.6 2.6 0 0 0-1.87-1.87l-3.5-.9a.45.45 0 0 1 0-.86l3.5-.9A2.6 2.6 0 0 0 6.54 5.04l.9-3.5c.05-.2.23-.34.43-.34z" />
+    </svg>
+  );
+}
+
+function ShieldIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" className={className} aria-hidden="true">
+      <path d="M8 1.5l5.2 1.9v3.7c0 3.4-2.2 6.2-5.2 7.4-3-1.2-5.2-4-5.2-7.4V3.4L8 1.5z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+/* ── Local Tailwind primitives (scoped to this page) ────────────────────── */
+
+function Spinner({ className = "" }: { className?: string }) {
+  return (
+    <svg className={`h-4 w-4 animate-spin ${className}`} viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <circle cx="8" cy="8" r="6" stroke="currentColor" strokeOpacity="0.25" strokeWidth="2" />
+      <path d="M8 2a6 6 0 0 1 6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function Btn({
+  children,
+  onClick,
+  disabled,
+  type = "button",
+  variant = "primary",
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  disabled?: boolean;
+  type?: "button" | "submit";
+  variant?: "primary" | "success" | "ghost" | "ai";
+}) {
+  const variants: Record<string, string> = {
+    primary: "border border-transparent bg-signal-deep text-white hover:bg-signal hover:shadow-[0_0_18px_2px_rgba(34,197,94,0.4)]",
+    success: "border border-transparent bg-success-deep text-white hover:bg-success hover:shadow-[0_0_18px_2px_rgba(22,163,74,0.4)]",
+    ghost: "border border-hairline-strong bg-oled-2 text-ink-secondary hover:bg-oled-3 hover:shadow-[0_0_14px_1px_rgba(255,255,255,0.12)]",
+    ai: "border border-ai-border bg-ai-surface text-ai-bright hover:bg-ai/14 hover:shadow-[0_0_18px_2px_rgba(34,197,94,0.4)]",
+  };
+  return (
+    <button
+      type={type}
+      onClick={onClick}
+      disabled={disabled}
+      className={`inline-flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-full px-4 py-2.5 text-sm font-semibold transition-all duration-150 active:scale-[0.97] disabled:cursor-not-allowed disabled:bg-oled-1 disabled:text-ink-faint disabled:opacity-60 disabled:active:scale-100 ${variants[variant]}`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function Field({
+  value,
+  onChange,
+  placeholder,
+  rows,
+  autoFocus,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  rows?: number;
+  autoFocus?: boolean;
+}) {
+  const base =
+    "w-full rounded-lg border border-hairline-strong bg-oled-2 px-3.5 py-2.5 text-sm text-ink outline-none transition-all duration-150 placeholder:text-ink-faint focus:border-signal focus:ring-1 focus:ring-signal/40";
+  if (rows) {
+    return (
+      <textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        rows={rows}
+        className={`${base} resize-none leading-relaxed`}
+      />
+    );
+  }
+  return (
+    <input
+      type="text"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      autoFocus={autoFocus}
+      autoComplete="off"
+      spellCheck={false}
+      className={base}
+    />
+  );
+}
+
+function SeverityBadge({ severity }: { severity: string }) {
+  const s = severity?.toLowerCase();
+  const map: Record<string, string> = {
+    critical: "border-red-800/60 bg-red-950/60 text-red-300",
+    high: "border-orange-800/50 bg-orange-950/50 text-orange-300",
+    medium: "border-yellow-800/40 bg-yellow-950/40 text-yellow-300",
+  };
+  const cls = map[s] ?? "border-green-800/40 bg-green-950/40 text-green-300";
+  const label = s === "critical" ? "Critical" : s === "high" ? "High" : s === "medium" ? "Medium" : "Low";
+  return <span className={`inline-block rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${cls}`}>{label}</span>;
+}
+
+function severityElevateClass(severity: string) {
+  const s = severity?.toLowerCase();
+  if (s === "critical") return "elevate-critical";
+  if (s === "high") return "elevate-high";
+  if (s === "medium") return "elevate-medium";
+  return "elevate-low";
+}
+
+function InfoCard({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="elevate-1 accent-wash-green rounded-xl p-5">
+      <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-ink-muted">{title}</p>
+      {children}
+    </div>
+  );
+}
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return <p className="mb-1 text-sm font-semibold text-ink-secondary">{children}</p>;
+}
+
+function CollapsibleRef({ title, children, defaultOpen = true }: { title: string; children: React.ReactNode; defaultOpen?: boolean }) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="elevate-1 accent-wash-green overflow-hidden rounded-xl">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex w-full cursor-pointer items-center justify-between px-4 py-3 text-left transition-colors hover:bg-white/5"
+      >
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted">{title}</span>
+        <motion.span
+          animate={{ rotate: open ? 180 : 0 }}
+          transition={{ duration: 0.2, ease: EASE_OUT }}
+          className="text-[10px] text-ink-faint"
+        >
+          ▼
+        </motion.span>
+      </button>
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.22, ease: EASE_OUT }}
+            className="border-t border-hairline"
+          >
+            <div className="px-4 pb-4 pt-3">{children}</div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function EditorSkeleton() {
+  return (
+    <div className="min-h-[380px] bg-oled-1 px-6 py-5">
+      {[78, 62, 91, 54, 70, 45, 83, 58, 74, 49].map((w, i) => (
+        <div
+          key={i}
+          className="skeleton mb-2.5"
+          style={{ height: "14px", width: `${w}%`, borderRadius: "6px", animationDelay: `${i * 55}ms` }}
+        />
+      ))}
+    </div>
+  );
+}
+
+/* ── Shared status panels ─────────────────────────────────────────────────── */
 
 function ProgressDots({ total, current, done }: { total: number; current: number; done: boolean }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+    <div className="flex items-center gap-1.5">
       {Array.from({ length: total }).map((_, i) => {
         const isDone = i < current || (i === current && done);
         const isActive = i === current && !done;
         return (
-          <div key={i} style={{
-            height: "6px", width: isActive ? "32px" : "8px", borderRadius: "9999px",
-            backgroundColor: isDone ? "#16a34a" : isActive ? "#3b82f6" : "#374151",
-            transition: "background-color 0.25s ease",
-          }} />
+          <div
+            key={i}
+            className={`h-1.5 rounded-full transition-all duration-300 ${isActive ? "w-8" : "w-2"} ${
+              isDone ? "bg-success" : isActive ? "bg-signal" : "bg-hairline-strong"
+            }`}
+          />
         );
       })}
     </div>
@@ -440,40 +664,18 @@ function ProgressDots({ total, current, done }: { total: number; current: number
 function ProcessingCard({ label }: { label: string }) {
   const isSlowOp = label.includes("NIST") || label.includes("Threat");
   return (
-    <div style={{ backgroundColor: "#111827", border: "1px solid #1f2937", borderRadius: "12px", padding: "32px 24px", textAlign: "center" }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", marginBottom: isSlowOp ? "10px" : "0" }}>
-        <Spinner />
-        <span style={{ fontSize: "14px", color: "#d1d5db" }}>{label}</span>
+    <div className="elevate-2 accent-wash-green rounded-2xl p-6 text-center">
+      <div className={`flex items-center justify-center gap-3 ${isSlowOp ? "mb-2.5" : ""}`}>
+        <Spinner className="text-ai-bright" />
+        <span className="text-sm text-ink-secondary">{label}</span>
       </div>
       {isSlowOp && (
-        <p style={{ fontSize: "12px", color: "#6b7280", margin: 0 }}>
-          The Threat Modeller queries the NIST NVD vulnerability database in real time — this typically takes 20–40 seconds.
+        <p className="text-xs text-ink-faint">
+          The Threat Modeller queries the NIST NVD vulnerability database in real time. This typically takes 20 to 40 seconds.
         </p>
       )}
     </div>
   );
-}
-
-function Spinner() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ animation: "spin 1s linear infinite" }}>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      <circle cx="8" cy="8" r="6" stroke="#374151" strokeWidth="2" />
-      <path d="M8 2a6 6 0 0 1 6 6" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function SeverityBadge({ severity }: { severity: string }) {
-  const s = severity?.toLowerCase();
-  const style: React.CSSProperties = {
-    display: "inline-block", fontSize: "11px", fontWeight: "600",
-    padding: "2px 8px", borderRadius: "9999px", border: "1px solid",
-  };
-  if (s === "critical") return <span style={{ ...style, backgroundColor: "#7f1d1d", color: "#fecaca", borderColor: "#b91c1c" }}>Critical</span>;
-  if (s === "high") return <span style={{ ...style, backgroundColor: "#7c2d12", color: "#fed7aa", borderColor: "#c2410c" }}>High</span>;
-  if (s === "medium") return <span style={{ ...style, backgroundColor: "#713f12", color: "#fef08a", borderColor: "#a16207" }}>Medium</span>;
-  return <span style={{ ...style, backgroundColor: "#14532d", color: "#bbf7d0", borderColor: "#15803d" }}>Low</span>;
 }
 
 /* ── Plan Review ─────────────────────────────────────────────────────────── */
@@ -488,91 +690,73 @@ function PlanReview({ plan, history, onDecide }: {
   const isRevision = history.length > 0;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-      <SectionLabel>
-        Planner{isRevision ? ` — revision ${history.length + 1}` : ""}
-      </SectionLabel>
+    <div className="flex flex-col gap-4">
+      <SectionLabel>Planner{isRevision ? ` (revision ${history.length + 1})` : ""}</SectionLabel>
 
       {/* Previous rounds */}
       {history.map((round, i) => (
-        <div key={i} style={{ opacity: 0.55 }}>
-          <p style={{ fontSize: "11px", fontWeight: "500", textTransform: "uppercase", letterSpacing: "0.07em", color: "#6b7280", margin: "0 0 8px" }}>
-            Round {i + 1} — superseded
-          </p>
-          <div style={{ backgroundColor: "#0d1117", border: "1px solid #1f2937", borderRadius: "12px", padding: "16px 20px", marginBottom: "8px" }}>
-            <p style={{ fontSize: "12px", fontWeight: "500", color: "#6b7280", margin: "0 0 8px" }}>Scope</p>
-            <p style={{ fontSize: "13px", lineHeight: "1.6", color: "#9ca3af", margin: 0 }}>{round.plan.scope}</p>
+        <div key={i} className="opacity-55">
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-ink-faint">Round {i + 1} (superseded)</p>
+          <div className="elevate-1 mb-2 rounded-xl p-5">
+            <p className="mb-2 text-xs font-medium text-ink-faint">Scope</p>
+            <p className="text-[13px] leading-relaxed text-ink-muted">{round.plan.scope}</p>
           </div>
-          <div style={{ backgroundColor: "#111827", border: "1px solid #1f2937", borderRadius: "8px", padding: "12px 16px", display: "flex", gap: "10px", alignItems: "flex-start" }}>
-            <span style={{ fontSize: "11px", fontWeight: "600", color: "#6b7280", flexShrink: 0, paddingTop: "1px" }}>Your feedback</span>
-            <p style={{ fontSize: "13px", lineHeight: "1.6", color: "#9ca3af", margin: 0, fontStyle: "italic" }}>"{round.feedback}"</p>
+          <div className="elevate-1 flex items-start gap-2.5 rounded-lg p-4">
+            <span className="flex-shrink-0 pt-px text-[11px] font-semibold text-ink-faint">Your feedback</span>
+            <p className="text-[13px] italic leading-relaxed text-ink-muted">&quot;{round.feedback}&quot;</p>
           </div>
         </div>
       ))}
 
       {/* Current plan */}
       <InfoCard title="Scope">
-        <p style={{ fontSize: "14px", lineHeight: "1.7", color: "#d1d5db", margin: 0 }}>{plan.scope}</p>
+        <p className="text-sm leading-relaxed text-ink-secondary">{plan.scope}</p>
       </InfoCard>
 
       <InfoCard title="Implementation Steps">
-        <ol style={{ margin: 0, paddingLeft: "20px" }}>
+        <ol className="m-0 list-decimal space-y-1.5 pl-5">
           {plan.steps.map((s, i) => (
-            <li key={i} style={{ fontSize: "14px", lineHeight: "1.7", color: "#d1d5db", marginBottom: "6px" }}>{s}</li>
+            <li key={i} className="text-sm leading-relaxed text-ink-secondary">{s}</li>
           ))}
         </ol>
       </InfoCard>
 
       <InfoCard title="Security Requirements">
-        <ul style={{ margin: 0, paddingLeft: "20px" }}>
+        <ul className="m-0 list-disc space-y-1.5 pl-5">
           {plan.security_requirements.map((r, i) => (
-            <li key={i} style={{ fontSize: "14px", lineHeight: "1.7", color: "#d1d5db", marginBottom: "6px" }}>{r}</li>
+            <li key={i} className="text-sm leading-relaxed text-ink-secondary">{r}</li>
           ))}
         </ul>
       </InfoCard>
 
       {/* Actions */}
-      {!showRevise ? (
-        <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
-          <button onClick={() => setShowRevise(true)} style={ghostBtnStyle}>Request Revision</button>
-          <div style={{ width: "180px" }}>
-            <PrimaryButton onClick={() => onDecide("approve")}>Approve Plan</PrimaryButton>
-          </div>
-        </div>
-      ) : (
-        <div style={{ backgroundColor: "#111827", border: "1px solid #1f2937", borderRadius: "12px", padding: "20px" }}>
-          <p style={{ fontSize: "12px", fontWeight: "500", textTransform: "uppercase", letterSpacing: "0.06em", color: "#9ca3af", margin: "0 0 10px" }}>
-            What would you like changed?
-          </p>
-          <FocusInput value={revision} onChange={setRevision} placeholder="e.g. Add input validation to the steps. Remove the caching requirement — it's out of scope." rows={3} />
-          <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", marginTop: "12px" }}>
-            <button onClick={() => { setShowRevise(false); setRevision(""); }} style={ghostBtnStyle}>Cancel</button>
-            <div style={{ width: "180px" }}>
-              <PrimaryButton onClick={() => { onDecide("revise", revision); setShowRevise(false); setRevision(""); }} disabled={!revision.trim()}>
-                Submit Feedback
-              </PrimaryButton>
+      <AnimatePresence mode="wait" initial={false}>
+        {!showRevise ? (
+          <motion.div key="actions" variants={revealVariants} initial="initial" animate="animate" exit="exit" className="flex justify-end gap-3">
+            <button onClick={() => setShowRevise(true)} className="cursor-pointer rounded-full border border-hairline-strong bg-oled-2 px-5 py-2.5 text-sm font-medium text-ink-secondary transition-all hover:bg-oled-3 hover:shadow-[0_0_14px_1px_rgba(255,255,255,0.12)]">
+              Request Revision
+            </button>
+            <div className="w-[180px]">
+              <Btn onClick={() => onDecide("approve")}>Approve Plan</Btn>
             </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* ── Collapsible reference card (used in ThreatReview, CodingStage, CodeReview) ── */
-
-function CollapsibleRef({ title, children, defaultOpen = true }: { title: string; children: React.ReactNode; defaultOpen?: boolean }) {
-  const [open, setOpen] = useState(defaultOpen);
-  return (
-    <div style={{ backgroundColor: "#111827", border: "1px solid #1f2937", borderRadius: "12px", overflow: "hidden" }}>
-      <button
-        onClick={() => setOpen(!open)}
-        style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", background: "none", border: "none", cursor: "pointer" }}
-      >
-        <span style={{ fontSize: "11px", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.07em", color: "#9ca3af" }}>{title}</span>
-        <span style={{ color: "#6b7280", fontSize: "10px" }}>{open ? "▲" : "▼"}</span>
-      </button>
-      {open && <div style={{ padding: "0 16px 14px", borderTop: "1px solid #1f2937" }}>{children}</div>}
+          </motion.div>
+        ) : (
+          <motion.div key="revise" variants={revealVariants} initial="initial" animate="animate" exit="exit" className="elevate-2 accent-wash-green rounded-xl p-5">
+            <p className="mb-2.5 text-[11px] font-semibold uppercase tracking-wider text-ink-muted">What would you like changed?</p>
+            <Field value={revision} onChange={setRevision} placeholder="e.g. Add input validation to the steps. Remove the caching requirement. It's out of scope." rows={3} />
+            <div className="mt-3 flex justify-end gap-2.5">
+              <button onClick={() => { setShowRevise(false); setRevision(""); }} className="cursor-pointer rounded-full border border-hairline-strong bg-oled-2 px-5 py-2.5 text-sm font-medium text-ink-secondary transition-all hover:bg-oled-3 hover:shadow-[0_0_14px_1px_rgba(255,255,255,0.12)]">
+                Cancel
+              </button>
+              <div className="w-[180px]">
+                <Btn onClick={() => { onDecide("revise", revision); setShowRevise(false); setRevision(""); }} disabled={!revision.trim()}>
+                  Submit Feedback
+                </Btn>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -588,54 +772,61 @@ function ThreatReview({ threats, plan, onDecide }: {
   const [showRevise, setShowRevise] = useState(false);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-      {/* Collapsed plan reference */}
+    <div className="flex flex-col gap-4">
       {plan && (
-        <CollapsibleRef title="Plan — approved" defaultOpen={false}>
-          <ol style={{ margin: "8px 0 0", paddingLeft: "18px" }}>
+        <CollapsibleRef title="Plan (approved)" defaultOpen={false}>
+          <ol className="m-0 list-decimal space-y-1 pl-[18px]">
             {plan.steps.map((s, i) => (
-              <li key={i} style={{ fontSize: "13px", lineHeight: "1.6", color: "#9ca3af", marginBottom: "4px" }}>{s}</li>
+              <li key={i} className="text-[13px] leading-relaxed text-ink-muted">{s}</li>
             ))}
           </ol>
         </CollapsibleRef>
       )}
 
-      <SectionLabel>Threat Model — {threats.length} threat{threats.length !== 1 ? "s" : ""} identified</SectionLabel>
+      <SectionLabel>Threat Model: {threats.length} threat{threats.length !== 1 ? "s" : ""} identified</SectionLabel>
 
-      {threats.map((t) => (
-        <div key={t.cwe_id} style={{ backgroundColor: "#111827", border: "1px solid #1f2937", borderRadius: "12px", padding: "20px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px", flexWrap: "wrap" }}>
-            <span style={{ fontFamily: "monospace", fontSize: "13px", color: "#60a5fa", fontWeight: "600" }}>{t.cwe_id}</span>
-            <span style={{ fontSize: "14px", fontWeight: "600", color: "#f3f4f6" }}>{t.name}</span>
-            <SeverityBadge severity={t.severity} />
-          </div>
-          <p style={{ fontSize: "13px", lineHeight: "1.6", color: "#9ca3af", margin: "0 0 10px" }}>{t.description}</p>
-          <div style={{ backgroundColor: "#1f2937", borderRadius: "8px", padding: "12px 14px" }}>
-            <p style={{ fontSize: "11px", fontWeight: "500", textTransform: "uppercase", letterSpacing: "0.06em", color: "#6b7280", margin: "0 0 6px" }}>Mitigation</p>
-            <p style={{ fontSize: "13px", lineHeight: "1.6", color: "#d1d5db", margin: 0 }}>{t.mitigation}</p>
-          </div>
-        </div>
-      ))}
-
-      {!showRevise ? (
-        <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
-          <button onClick={() => setShowRevise(true)} style={ghostBtnStyle}>Request Revision</button>
-          <div style={{ width: "200px" }}>
-            <PrimaryButton onClick={() => onDecide("approve")}>Approve Threat Model</PrimaryButton>
-          </div>
-        </div>
-      ) : (
-        <div style={{ backgroundColor: "#111827", border: "1px solid #1f2937", borderRadius: "12px", padding: "20px" }}>
-          <p style={{ fontSize: "12px", fontWeight: "500", textTransform: "uppercase", letterSpacing: "0.06em", color: "#9ca3af", margin: "0 0 10px" }}>Revision Request</p>
-          <FocusInput value={revision} onChange={setRevision} placeholder="Describe what you'd like changed…" rows={3} />
-          <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", marginTop: "12px" }}>
-            <button onClick={() => setShowRevise(false)} style={ghostBtnStyle}>Cancel</button>
-            <div style={{ width: "180px" }}>
-              <PrimaryButton onClick={() => onDecide("revise", revision)} disabled={!revision.trim()}>Submit Revision</PrimaryButton>
+      <motion.div variants={staggerContainer} initial="initial" animate="animate" className="flex flex-col gap-4">
+        {threats.map((t) => (
+          <motion.div key={t.cwe_id} variants={staggerItem} className="elevate-1 accent-wash-green rounded-xl p-5">
+            <div className="mb-3 flex flex-wrap items-center gap-2.5">
+              <span className="font-mono text-[13px] font-semibold text-signal-bright">{t.cwe_id}</span>
+              <span className="text-sm font-semibold text-ink">{t.name}</span>
+              <SeverityBadge severity={t.severity} />
             </div>
-          </div>
-        </div>
-      )}
+            <p className="mb-2.5 text-[13px] leading-relaxed text-ink-muted">{t.description}</p>
+            <div className="rounded-lg bg-oled-3 p-3.5">
+              <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-ink-faint">Mitigation</p>
+              <p className="text-[13px] leading-relaxed text-ink-secondary">{t.mitigation}</p>
+            </div>
+          </motion.div>
+        ))}
+      </motion.div>
+
+      <AnimatePresence mode="wait" initial={false}>
+        {!showRevise ? (
+          <motion.div key="actions" variants={revealVariants} initial="initial" animate="animate" exit="exit" className="flex justify-end gap-3">
+            <button onClick={() => setShowRevise(true)} className="cursor-pointer rounded-full border border-hairline-strong bg-oled-2 px-5 py-2.5 text-sm font-medium text-ink-secondary transition-all hover:bg-oled-3 hover:shadow-[0_0_14px_1px_rgba(255,255,255,0.12)]">
+              Request Revision
+            </button>
+            <div className="w-[200px]">
+              <Btn onClick={() => onDecide("approve")}>Approve Threat Model</Btn>
+            </div>
+          </motion.div>
+        ) : (
+          <motion.div key="revise" variants={revealVariants} initial="initial" animate="animate" exit="exit" className="elevate-2 accent-wash-green rounded-xl p-5">
+            <p className="mb-2.5 text-[11px] font-semibold uppercase tracking-wider text-ink-muted">Revision Request</p>
+            <Field value={revision} onChange={setRevision} placeholder="Describe what you'd like changed…" rows={3} />
+            <div className="mt-3 flex justify-end gap-2.5">
+              <button onClick={() => setShowRevise(false)} className="cursor-pointer rounded-full border border-hairline-strong bg-oled-2 px-5 py-2.5 text-sm font-medium text-ink-secondary transition-all hover:bg-oled-3 hover:shadow-[0_0_14px_1px_rgba(255,255,255,0.12)]">
+                Cancel
+              </button>
+              <div className="w-[180px]">
+                <Btn onClick={() => onDecide("revise", revision)} disabled={!revision.trim()}>Submit Revision</Btn>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -773,14 +964,14 @@ function CodingStage({
   const steps = plan?.steps ?? [];
 
   return (
-    <div style={{ display: "flex", gap: "20px", alignItems: "flex-start" }}>
+    <div className="flex items-start gap-5">
 
-      {/* ── Main column ──────────────────────────────────────────────────────── */}
-      <div style={{ flex: "1 1 0", minWidth: 0, display: "flex", flexDirection: "column", gap: "16px" }}>
-        <SectionLabel>Write your code — use the hints if you need help</SectionLabel>
+      {/* ── Main column ──────────────────────────────────────────────────── */}
+      <div className="flex min-w-0 flex-1 flex-col gap-4">
+        <SectionLabel>Write your code. Use the hints if you need help.</SectionLabel>
 
         {/* Editor */}
-        <div style={{ borderRadius: "12px", overflow: "hidden", border: "1px solid #1f2937" }}>
+        <div className="elevate-2 accent-wash-green overflow-hidden rounded-xl">
           <MonacoEditor
             height="380px"
             language="python"
@@ -791,210 +982,244 @@ function CodingStage({
           />
         </div>
 
-        {/* ── Hint panel ── */}
-        <div style={{ backgroundColor: "#111827", border: "1px solid #1f2937", borderRadius: "12px", padding: "20px", display: "flex", flexDirection: "column", gap: "16px" }}>
-          <p style={{ fontSize: "11px", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.07em", color: "#9ca3af", margin: 0 }}>Hints</p>
+        {/* ── Hints — layered floating panels, one per concern ── */}
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center gap-1.5">
+            <SparkleIcon className="h-3.5 w-3.5 text-ai-bright" />
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted">Hints</p>
+          </div>
 
-          {/* Adaptive: "What should I do next?" */}
-          <div style={{ backgroundColor: "#0f172a", border: "1px solid #1e3a5f", borderRadius: "10px", padding: "14px 16px" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}>
-              <p style={{ fontSize: "13px", color: "#93c5fd", margin: 0, fontWeight: "500" }}>What should I do next?</p>
+          {/* Adaptive: "What should I do next?" — floating AI query card */}
+          <div className="elevate-glass accent-wash-green rounded-xl p-4">
+            <div className="flex items-center justify-between gap-3">
+              <p className="flex items-center gap-1.5 text-[13px] font-medium text-ai-bright">
+                <SparkleIcon className="h-3.5 w-3.5" />
+                What should I do next?
+              </p>
               <button
                 onClick={handleNextHint}
                 disabled={nextHintLoading || code.length < 20}
-                style={{
-                  padding: "6px 14px", fontSize: "12px", fontWeight: "500", borderRadius: "6px",
-                  border: "1px solid #1e3a5f", backgroundColor: "#1e3a5f",
-                  color: code.length < 20 ? "#4b6a8c" : "#93c5fd",
-                  cursor: nextHintLoading || code.length < 20 ? "not-allowed" : "pointer",
-                  display: "flex", alignItems: "center", gap: "6px", flexShrink: 0,
-                }}
+                className="flex flex-shrink-0 cursor-pointer items-center gap-1.5 rounded-md border border-ai-border bg-ai-surface px-3.5 py-1.5 text-xs font-medium text-ai-bright transition-colors hover:bg-ai/16 disabled:cursor-not-allowed disabled:border-hairline disabled:bg-transparent disabled:text-ink-faint"
               >
                 {nextHintLoading ? <><Spinner /> Analysing…</> : "Ask"}
               </button>
             </div>
-            {nextHint && (
-              <div style={{ marginTop: "12px", paddingTop: "12px", borderTop: "1px solid #1e3a5f" }}>
-                <p style={{ fontSize: "13px", lineHeight: "1.7", color: "#d1d5db", margin: 0, whiteSpace: "pre-wrap" }}>{nextHint.text}</p>
-                {nextHint.securityNote && (
-                  <div style={{ marginTop: "10px", display: "flex", gap: "8px", alignItems: "flex-start" }}>
-                    <span style={{ fontSize: "11px", fontWeight: "600", color: "#60a5fa", flexShrink: 0 }}>Security</span>
-                    <p style={{ fontSize: "12px", lineHeight: "1.6", color: "#93c5fd", margin: 0 }}>{nextHint.securityNote}</p>
-                  </div>
-                )}
-              </div>
-            )}
+            <AnimatePresence mode="wait">
+              {nextHint && (
+                <motion.div key="next-hint" variants={revealVariants} initial="initial" animate="animate" exit="exit" className="mt-3 border-t border-ai-border/50 pt-3">
+                  <p className="whitespace-pre-wrap text-[13px] leading-relaxed text-ink-secondary">{nextHint.text}</p>
+                  {nextHint.securityNote && (
+                    <div className="mt-2.5 flex items-start gap-2">
+                      <ShieldIcon className="mt-0.5 h-3 w-3 flex-shrink-0 text-warning-ink" />
+                      <p className="text-xs leading-relaxed text-warning-ink">{nextHint.securityNote}</p>
+                    </div>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
-          {/* Per-step hint ladder */}
+          {/* Per-step hint ladder — each step is its own floating card */}
           {capsLoading ? (
-            <p style={{ fontSize: "12px", color: "#6b7280", margin: 0 }}>Loading step hints…</p>
-          ) : steps.map((stepText, i) => {
-            const capDepth = capDepthFor(i);
-            const isActiveStep = activeStepHint?.step === i;
-            return (
-              <div key={i} style={{ borderTop: "1px solid #1f2937", paddingTop: "14px" }}>
-                <p style={{ fontSize: "12px", fontWeight: "500", color: "#d1d5db", margin: "0 0 10px", lineHeight: "1.5" }}>
-                  <span style={{ fontFamily: "monospace", fontSize: "11px", color: "#6b7280", marginRight: "6px" }}>Step {i + 1}</span>
-                  {stepText}
-                </p>
-                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                  {LEVEL_ORDER.map((level) => {
-                    const depth = LEVEL_DEPTH[level];
-                    if (depth > capDepth) return null; // hidden above cap
-                    const available = isAvailable(i, level);
-                    const used = isUsed(i, level);
-                    const isLoading = stepHintLoading?.step === i && stepHintLoading?.level === level;
-                    return (
-                      <button
-                        key={level}
-                        onClick={() => handleStepHint(i, level)}
-                        disabled={!available || !!stepHintLoading}
-                        style={{
-                          padding: "6px 12px", fontSize: "12px", fontWeight: "500",
-                          borderRadius: "6px",
-                          border: `1px solid ${used ? "#1e3a5f" : available ? "#374151" : "#1f2937"}`,
-                          backgroundColor: used ? "#1e3a5f" : available ? "#1f2937" : "transparent",
-                          color: !available ? "#374151" : used ? "#60a5fa" : "#9ca3af",
-                          cursor: available && !stepHintLoading ? "pointer" : "not-allowed",
-                          display: "flex", alignItems: "center", gap: "5px",
-                        }}
-                      >
-                        {isLoading && <Spinner />}
-                        {LEVEL_LABELS[level]}
-                      </button>
-                    );
-                  })}
-                </div>
-                {isActiveStep && activeStepHint && (
-                  <div style={{ marginTop: "12px", backgroundColor: "#1f2937", borderRadius: "8px", padding: "14px 16px" }}>
-                    <p style={{ fontSize: "11px", fontWeight: "500", textTransform: "uppercase", letterSpacing: "0.06em", color: "#6b7280", margin: "0 0 8px" }}>
-                      {LEVEL_LABELS[activeStepHint.level as HintLevel] ?? activeStepHint.level} — Step {i + 1}
-                    </p>
-                    <p style={{ fontSize: "13px", lineHeight: "1.7", color: "#d1d5db", margin: 0, whiteSpace: "pre-wrap" }}>{activeStepHint.text}</p>
-                    {activeStepHint.securityNote && (
-                      <div style={{ marginTop: "10px", paddingTop: "10px", borderTop: "1px solid #374151", display: "flex", gap: "8px", alignItems: "flex-start" }}>
-                        <span style={{ fontSize: "11px", fontWeight: "600", color: "#60a5fa", flexShrink: 0 }}>Security</span>
-                        <p style={{ fontSize: "12px", lineHeight: "1.6", color: "#93c5fd", margin: 0 }}>{activeStepHint.securityNote}</p>
-                      </div>
-                    )}
+            <p className="text-xs text-ink-faint">Loading step hints…</p>
+          ) : (
+            steps.map((stepText, i) => {
+              const capDepth = capDepthFor(i);
+              const isActiveStep = activeStepHint?.step === i;
+              return (
+                <div key={i} className="elevate-1 accent-wash-green rounded-xl p-4">
+                  <p className="mb-2.5 text-[13px] leading-relaxed text-ink-secondary">
+                    <span className="mr-1.5 font-mono text-[11px] text-ink-faint">Step {i + 1}</span>
+                    {stepText}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {LEVEL_ORDER.map((level) => {
+                      const depth = LEVEL_DEPTH[level];
+                      if (depth > capDepth) return null; // hidden above cap
+                      const available = isAvailable(i, level);
+                      const used = isUsed(i, level);
+                      const isLoading = stepHintLoading?.step === i && stepHintLoading?.level === level;
+                      return (
+                        <button
+                          key={level}
+                          onClick={() => handleStepHint(i, level)}
+                          disabled={!available || !!stepHintLoading}
+                          className={`flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors ${
+                            used
+                              ? "cursor-pointer border-ai-border bg-ai-surface text-ai-bright"
+                              : available
+                              ? "cursor-pointer border-hairline-strong bg-oled-2 text-ink-secondary hover:bg-oled-3"
+                              : "cursor-not-allowed border-hairline bg-transparent text-ink-faint/50"
+                          }`}
+                        >
+                          {isLoading && <Spinner />}
+                          {LEVEL_LABELS[level]}
+                        </button>
+                      );
+                    })}
                   </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Security hint — whole-code pass */}
-        <div style={{ backgroundColor: "#111827", border: "1px solid #1f2937", borderRadius: "12px", padding: "20px" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}>
-            <div>
-              <p style={{ fontSize: "11px", fontWeight: "500", textTransform: "uppercase", letterSpacing: "0.07em", color: "#9ca3af", margin: "0 0 4px" }}>Security Feedback</p>
-              <p style={{ fontSize: "13px", color: "#6b7280", margin: 0 }}>Analyse your whole code for security issues.</p>
-            </div>
-            <button
-              onClick={handleSecurityHint}
-              disabled={code.length < 30 || securityHintLoading}
-              style={{
-                padding: "8px 16px", fontSize: "13px", fontWeight: "500", borderRadius: "8px",
-                border: "1px solid #374151", backgroundColor: "#1f2937",
-                color: code.length < 30 ? "#6b7280" : "#d1d5db",
-                cursor: code.length < 30 || securityHintLoading ? "not-allowed" : "pointer",
-                display: "flex", alignItems: "center", gap: "6px", flexShrink: 0,
-              }}
-            >
-              {securityHintLoading && <Spinner />}
-              Analyse Code
-            </button>
-          </div>
-          {securityHint && (
-            <div style={{ marginTop: "14px", backgroundColor: "#422006", border: "1px solid #854d0e", borderRadius: "8px", padding: "14px 16px" }}>
-              <p style={{ fontSize: "13px", lineHeight: "1.7", color: "#facc15", margin: 0, whiteSpace: "pre-wrap" }}>{securityHint}</p>
-            </div>
+                  <AnimatePresence mode="wait">
+                    {isActiveStep && activeStepHint && (
+                      <motion.div
+                        key={`${activeStepHint.step}-${activeStepHint.level}`}
+                        variants={revealVariants}
+                        initial="initial"
+                        animate="animate"
+                        exit="exit"
+                        className="elevate-3 mt-3 rounded-lg p-4"
+                      >
+                        <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-ai-bright">
+                          {LEVEL_LABELS[activeStepHint.level as HintLevel] ?? activeStepHint.level}: Step {i + 1}
+                        </p>
+                        <p className="whitespace-pre-wrap text-[13px] leading-relaxed text-ink-secondary">{activeStepHint.text}</p>
+                        {activeStepHint.securityNote && (
+                          <div className="mt-2.5 flex items-start gap-2 border-t border-hairline pt-2.5">
+                            <ShieldIcon className="mt-0.5 h-3 w-3 flex-shrink-0 text-warning-ink" />
+                            <p className="text-xs leading-relaxed text-warning-ink">{activeStepHint.securityNote}</p>
+                          </div>
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              );
+            })
           )}
+
+          {/* Security hint — whole-code pass */}
+          <div className="elevate-1 accent-wash-green rounded-xl p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="mb-1 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-ink-muted">
+                  <ShieldIcon className="h-3 w-3" /> Security Feedback
+                </p>
+                <p className="text-[13px] text-ink-faint">Analyse your whole code for security issues.</p>
+              </div>
+              <button
+                onClick={handleSecurityHint}
+                disabled={code.length < 30 || securityHintLoading}
+                className="flex flex-shrink-0 cursor-pointer items-center gap-1.5 rounded-md border border-hairline-strong bg-oled-2 px-4 py-2 text-[13px] font-medium text-ink-secondary transition-colors hover:bg-oled-3 disabled:cursor-not-allowed disabled:text-ink-faint"
+              >
+                {securityHintLoading && <Spinner />}
+                Analyse Code
+              </button>
+            </div>
+            <AnimatePresence mode="wait">
+              {securityHint && (
+                <motion.div
+                  key="security-hint"
+                  variants={revealVariants}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  className="mt-3.5 rounded-lg border border-warning-border/60 bg-warning-surface/70 p-4"
+                >
+                  <p className="whitespace-pre-wrap text-[13px] leading-relaxed text-warning-ink">{securityHint}</p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
 
         {/* Submit / annotation gate */}
-        {!showGate ? (
-          <div style={{ display: "flex", justifyContent: "flex-end" }}>
-            <div style={{ width: "220px" }}>
-              <PrimaryButton onClick={onShowGate} disabled={code.trim().length === 0}>Submit for Review</PrimaryButton>
-            </div>
-          </div>
-        ) : (
-          <div style={{ backgroundColor: "#111827", border: "1px solid #1f2937", borderRadius: "12px", padding: "24px", display: "flex", flexDirection: "column", gap: "20px" }}>
-            <p style={{ fontSize: "14px", fontWeight: "600", color: "#f3f4f6", margin: 0 }}>Before submitting — answer three questions</p>
-
-            <div>
-              <label style={gateLabelStyle}>1. What does your code do?</label>
-              <FocusInput value={whatCodeDoes} onChange={onWhatCodeDoes} placeholder="Briefly describe what your implementation does…" rows={3} />
-            </div>
-
-            <div>
-              <label style={gateLabelStyle}>2. Which threats does your code address?</label>
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "8px" }}>
-                {threats.map((t) => (
-                  <label key={t.cwe_id} style={{ display: "flex", alignItems: "flex-start", gap: "10px", cursor: "pointer" }}>
-                    <input type="checkbox" checked={threatsAddressed.includes(t.cwe_id)} onChange={() => toggleThreat(t.cwe_id)}
-                      style={{ marginTop: "3px", accentColor: "#3b82f6", flexShrink: 0 }} />
-                    <span style={{ fontSize: "13px", color: "#d1d5db" }}>
-                      <span style={{ fontFamily: "monospace", color: "#60a5fa" }}>{t.cwe_id}</span> — {t.name}
-                    </span>
-                  </label>
-                ))}
+        <AnimatePresence mode="wait" initial={false}>
+          {!showGate ? (
+            <motion.div key="submit" variants={revealVariants} initial="initial" animate="animate" exit="exit" className="flex justify-end">
+              <div className="w-[220px]">
+                <Btn onClick={onShowGate} disabled={code.trim().length === 0}>Submit for Review</Btn>
               </div>
-            </div>
+            </motion.div>
+          ) : (
+            <motion.div key="gate" variants={revealVariants} initial="initial" animate="animate" exit="exit" className="elevate-2 accent-wash-green flex flex-col gap-5 rounded-xl p-6">
+              <p className="text-sm font-semibold text-ink">Before submitting: answer three questions</p>
 
-            <div>
-              <label style={gateLabelStyle}>3. How confident are you in your code's security? (1 = low, 5 = high)</label>
-              <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
-                {[1, 2, 3, 4, 5].map((n) => (
-                  <button key={n} onClick={() => onConfidence(n)} style={{
-                    width: "40px", height: "40px", borderRadius: "8px",
-                    border: `1px solid ${confidence === n ? "#3b82f6" : "#374151"}`,
-                    backgroundColor: confidence === n ? "#1e3a5f" : "#1f2937",
-                    color: confidence === n ? "#60a5fa" : "#9ca3af",
-                    fontSize: "14px", fontWeight: "600", cursor: "pointer",
-                  }}>{n}</button>
-                ))}
-              </div>
-            </div>
-
-            {threats.length > 0 && (
               <div>
-                <label style={{ ...gateLabelStyle, color: "#6b7280" }}>Optional: which vulnerabilities do you predict the reviewer will flag?</label>
-                <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "8px" }}>
+                <label className="mb-2 block text-[13px] font-medium text-ink-secondary">1. What does your code do?</label>
+                <Field value={whatCodeDoes} onChange={onWhatCodeDoes} placeholder="Briefly describe what your implementation does…" rows={3} />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-[13px] font-medium text-ink-secondary">2. Which threats does your code address?</label>
+                <div className="mt-2 flex flex-col gap-2">
                   {threats.map((t) => (
-                    <label key={t.cwe_id} style={{ display: "flex", alignItems: "flex-start", gap: "10px", cursor: "pointer" }}>
-                      <input type="checkbox" checked={predictions.includes(t.cwe_id)} onChange={() => togglePrediction(t.cwe_id)}
-                        style={{ marginTop: "3px", accentColor: "#3b82f6", flexShrink: 0 }} />
-                      <span style={{ fontSize: "13px", color: "#9ca3af" }}>
-                        <span style={{ fontFamily: "monospace", color: "#60a5fa" }}>{t.cwe_id}</span> — {t.name}
+                    <label key={t.cwe_id} className="flex cursor-pointer items-start gap-2.5">
+                      <input
+                        type="checkbox"
+                        checked={threatsAddressed.includes(t.cwe_id)}
+                        onChange={() => toggleThreat(t.cwe_id)}
+                        className="mt-0.5 flex-shrink-0 accent-signal"
+                      />
+                      <span className="text-[13px] text-ink-secondary">
+                        <span className="font-mono text-signal-bright">{t.cwe_id}</span>: {t.name}
                       </span>
                     </label>
                   ))}
                 </div>
               </div>
-            )}
 
-            <div style={{ display: "flex", justifyContent: "flex-end" }}>
-              <div style={{ width: "220px" }}>
-                <PrimaryButton onClick={() => onFinalize(hintsLog)} disabled={!canSubmit}>Send to Code Reviewer</PrimaryButton>
+              <div>
+                <label className="mb-2 block text-[13px] font-medium text-ink-secondary">
+                  3. How confident are you in your code&apos;s security? (1 = low, 5 = high)
+                </label>
+                <div className="mt-2 flex gap-2">
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <button
+                      key={n}
+                      onClick={() => onConfidence(n)}
+                      className={`h-10 w-10 cursor-pointer rounded-full border text-sm font-semibold transition-colors ${
+                        confidence === n
+                          ? "border-signal bg-signal/16 text-signal-bright"
+                          : "border-hairline-strong bg-oled-2 text-ink-secondary hover:bg-oled-3"
+                      }`}
+                    >
+                      {n}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-          </div>
-        )}
+
+              {threats.length > 0 && (
+                <div>
+                  <label className="mb-2 block text-[13px] font-medium text-ink-faint">
+                    Optional: which vulnerabilities do you predict the reviewer will flag?
+                  </label>
+                  <div className="mt-2 flex flex-col gap-2">
+                    {threats.map((t) => (
+                      <label key={t.cwe_id} className="flex cursor-pointer items-start gap-2.5">
+                        <input
+                          type="checkbox"
+                          checked={predictions.includes(t.cwe_id)}
+                          onChange={() => togglePrediction(t.cwe_id)}
+                          className="mt-0.5 flex-shrink-0 accent-signal"
+                        />
+                        <span className="text-[13px] text-ink-faint">
+                          <span className="font-mono text-signal-bright">{t.cwe_id}</span>: {t.name}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex justify-end">
+                <div className="w-[220px]">
+                  <Btn onClick={() => onFinalize(hintsLog)} disabled={!canSubmit}>Send to Code Reviewer</Btn>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>{/* end main column */}
 
       {/* ── Sidebar ────────────────────────────────────────────────────────── */}
       {hasSidebar && (
-        <div style={{ width: "300px", flexShrink: 0, display: "flex", flexDirection: "column", gap: "12px", position: "sticky", top: "96px" }}>
+        <div className="sticky top-24 flex w-[300px] flex-shrink-0 flex-col gap-3">
           {plan && (
             <CollapsibleRef title="Plan" defaultOpen={true}>
-              <p style={{ fontSize: "12px", color: "#9ca3af", margin: "0 0 8px", lineHeight: "1.5" }}>{plan.scope}</p>
-              <ol style={{ margin: 0, paddingLeft: "16px" }}>
+              <p className="mb-2 text-xs leading-relaxed text-ink-muted">{plan.scope}</p>
+              <ol className="m-0 list-decimal space-y-1 pl-4">
                 {plan.steps.map((s, i) => (
-                  <li key={i} style={{ fontSize: "12px", lineHeight: "1.6", color: "#d1d5db", marginBottom: "4px" }}>{s}</li>
+                  <li key={i} className="text-xs leading-relaxed text-ink-secondary">{s}</li>
                 ))}
               </ol>
             </CollapsibleRef>
@@ -1002,13 +1227,13 @@ function CodingStage({
           {threats.length > 0 && (
             <CollapsibleRef title="Threat Model" defaultOpen={true}>
               {threats.map((t) => (
-                <div key={t.cwe_id} style={{ marginBottom: "12px", paddingBottom: "12px", borderBottom: "1px solid #1f2937" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px", flexWrap: "wrap" }}>
-                    <span style={{ fontFamily: "monospace", fontSize: "11px", color: "#60a5fa", fontWeight: "600" }}>{t.cwe_id}</span>
+                <div key={t.cwe_id} className="mb-3 border-b border-hairline pb-3 last:mb-0 last:border-0 last:pb-0">
+                  <div className="mb-1 flex flex-wrap items-center gap-1.5">
+                    <span className="font-mono text-[11px] font-semibold text-signal-bright">{t.cwe_id}</span>
                     <SeverityBadge severity={t.severity} />
                   </div>
-                  <p style={{ fontSize: "12px", fontWeight: "600", color: "#f3f4f6", margin: "0 0 4px" }}>{t.name}</p>
-                  <p style={{ fontSize: "11px", lineHeight: "1.55", color: "#9ca3af", margin: 0 }}>{t.mitigation}</p>
+                  <p className="mb-1 text-xs font-semibold text-ink">{t.name}</p>
+                  <p className="text-[11px] leading-relaxed text-ink-muted">{t.mitigation}</p>
                 </div>
               ))}
             </CollapsibleRef>
@@ -1039,92 +1264,103 @@ function CodeReview({ findings, predictionAccuracy, plan, threats, code, onAckno
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+    <div className="flex flex-col gap-4">
       {/* Collapsed references from earlier stages */}
       {plan && (
-        <CollapsibleRef title="Plan — approved" defaultOpen={false}>
-          <ol style={{ margin: "8px 0 0", paddingLeft: "18px" }}>
+        <CollapsibleRef title="Plan (approved)" defaultOpen={false}>
+          <ol className="m-0 list-decimal space-y-1 pl-[18px]">
             {plan.steps.map((s, i) => (
-              <li key={i} style={{ fontSize: "13px", lineHeight: "1.6", color: "#9ca3af", marginBottom: "4px" }}>{s}</li>
+              <li key={i} className="text-[13px] leading-relaxed text-ink-muted">{s}</li>
             ))}
           </ol>
         </CollapsibleRef>
       )}
       {threats.length > 0 && (
-        <CollapsibleRef title="Threat model — approved" defaultOpen={false}>
+        <CollapsibleRef title="Threat model (approved)" defaultOpen={false}>
           {threats.map((t) => (
-            <div key={t.cwe_id} style={{ display: "flex", alignItems: "baseline", gap: "8px", marginTop: "8px" }}>
-              <span style={{ fontFamily: "monospace", fontSize: "11px", color: "#60a5fa", fontWeight: "600", flexShrink: 0 }}>{t.cwe_id}</span>
-              <span style={{ fontSize: "12px", color: "#9ca3af" }}>{t.name}</span>
+            <div key={t.cwe_id} className="mt-2 flex items-baseline gap-2">
+              <span className="flex-shrink-0 font-mono text-[11px] font-semibold text-signal-bright">{t.cwe_id}</span>
+              <span className="text-xs text-ink-muted">{t.name}</span>
             </div>
           ))}
         </CollapsibleRef>
       )}
 
       <SectionLabel>
-        Code Review — {findings.length === 0 ? "No issues found" : `${findings.length} issue${findings.length !== 1 ? "s" : ""} found`}
+        Code Review: {findings.length === 0 ? "No issues found" : `${findings.length} issue${findings.length !== 1 ? "s" : ""} found`}
       </SectionLabel>
 
       {predictionAccuracy !== null && (
-        <div style={{ backgroundColor: "#111827", border: "1px solid #1f2937", borderRadius: "12px", padding: "16px 20px" }}>
-          <p style={{ fontSize: "11px", fontWeight: "500", textTransform: "uppercase", letterSpacing: "0.07em", color: "#9ca3af", margin: "0 0 6px" }}>Prediction Accuracy</p>
-          <p style={{ fontSize: "14px", color: "#d1d5db", margin: 0 }}>
-            You predicted <strong style={{ color: "#f3f4f6" }}>{Math.round(predictionAccuracy * 100)}%</strong> of the flagged vulnerabilities correctly.
+        <div className="elevate-1 accent-wash-green rounded-xl p-5">
+          <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-ink-muted">Prediction Accuracy</p>
+          <p className="text-sm text-ink-secondary">
+            You predicted <strong className="text-ink">{Math.round(predictionAccuracy * 100)}%</strong> of the flagged vulnerabilities correctly.
           </p>
         </div>
       )}
 
       {findings.length === 0 ? (
-        <div style={{ backgroundColor: "#052e16", border: "1px solid #15803d", borderRadius: "12px", padding: "24px", textAlign: "center" }}>
-          <p style={{ fontSize: "14px", color: "#86efac", margin: 0 }}>✓ No security issues detected in your code.</p>
+        <div className="rounded-xl border border-success-deep/50 bg-success-surface/70 p-6 text-center">
+          <p className="flex items-center justify-center gap-2 text-sm text-success-ink">
+            <span key="ok-check" className="check-pop inline-block">✓</span>
+            No security issues detected in your code.
+          </p>
         </div>
       ) : (
-        findings.map((f, i) => (
-          <div key={i} style={{ backgroundColor: "#111827", border: "1px solid #1f2937", borderRadius: "12px", padding: "20px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px", flexWrap: "wrap" }}>
-              <span style={{ fontFamily: "monospace", fontSize: "13px", color: "#60a5fa", fontWeight: "600" }}>{f.cwe_id}</span>
-              <SeverityBadge severity={f.severity} />
-              {f.line_number && <span style={{ fontSize: "12px", color: "#6b7280", fontFamily: "monospace" }}>line {f.line_number}</span>}
-              <span style={{ fontSize: "11px", color: "#6b7280", border: "1px solid #1f2937", borderRadius: "9999px", padding: "1px 6px" }}>{f.source}</span>
-            </div>
-            <p style={{ fontSize: "13px", lineHeight: "1.6", color: "#d1d5db", margin: "0 0 10px" }}>{f.description}</p>
-            <div style={{ backgroundColor: "#1f2937", borderRadius: "8px", padding: "12px 14px" }}>
-              <p style={{ fontSize: "11px", fontWeight: "500", textTransform: "uppercase", letterSpacing: "0.06em", color: "#6b7280", margin: "0 0 6px" }}>Suggested Fix</p>
-              <p style={{ fontSize: "13px", lineHeight: "1.6", color: "#d1d5db", margin: 0 }}>{f.suggested_fix}</p>
-            </div>
-          </div>
-        ))
+        <motion.div variants={staggerContainer} initial="initial" animate="animate" className="flex flex-col gap-4">
+          {findings.map((f, i) => (
+            <motion.div key={i} variants={staggerItem} className={`${severityElevateClass(f.severity)} rounded-xl p-5`}>
+              <div className="mb-3 flex flex-wrap items-center gap-2.5">
+                <span className="font-mono text-[13px] font-semibold text-signal-bright">{f.cwe_id}</span>
+                <SeverityBadge severity={f.severity} />
+                {f.line_number && <span className="font-mono text-xs text-ink-faint">line {f.line_number}</span>}
+                <span className="rounded-full border border-hairline px-1.5 py-0.5 text-[11px] text-ink-faint">{f.source}</span>
+              </div>
+              <p className="mb-2.5 text-[13px] leading-relaxed text-ink-secondary">{f.description}</p>
+              <div className="rounded-lg bg-oled-3 p-3.5">
+                <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-ink-faint">Suggested Fix</p>
+                <p className="text-[13px] leading-relaxed text-ink-secondary">{f.suggested_fix}</p>
+              </div>
+            </motion.div>
+          ))}
+        </motion.div>
       )}
 
       {/* Inline code editor shown when participant chooses to revise */}
-      {isRevising && (
-        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-          <SectionLabel>Edit your code — findings are shown above for reference</SectionLabel>
-          <div style={{ borderRadius: "12px", overflow: "hidden", border: "1px solid #374151" }}>
-            <MonacoEditor
-              height="380px"
-              language="python"
-              value={revisedCode}
-              theme="vs-dark"
-              onChange={(val) => setRevisedCode(val ?? "")}
-              options={{ minimap: { enabled: false }, lineNumbers: "on", wordWrap: "on", scrollBeyondLastLine: false, fontSize: 13, padding: { top: 16, bottom: 16 } }}
-            />
-          </div>
-        </div>
-      )}
+      <AnimatePresence>
+        {isRevising && (
+          <motion.div key="revise-editor" variants={revealVariants} initial="initial" animate="animate" exit="exit" className="flex flex-col gap-2.5">
+            <SectionLabel>Edit your code. Findings are shown above for reference.</SectionLabel>
+            <div className="elevate-2 accent-wash-green overflow-hidden rounded-xl">
+              <MonacoEditor
+                height="380px"
+                language="python"
+                value={revisedCode}
+                theme="vs-dark"
+                onChange={(val) => setRevisedCode(val ?? "")}
+                options={{ minimap: { enabled: false }, lineNumbers: "on", wordWrap: "on", scrollBeyondLastLine: false, fontSize: 13, padding: { top: 16, bottom: 16 } }}
+              />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+      <div className="flex justify-end gap-2.5">
         {isRevising ? (
           <>
-            <button onClick={() => setIsRevising(false)} style={ghostBtnStyle}>Cancel</button>
-            <PrimaryButton onClick={() => onRevise(revisedCode)}>Re-submit for Review</PrimaryButton>
+            <button onClick={() => setIsRevising(false)} className="cursor-pointer rounded-full border border-hairline-strong bg-oled-2 px-5 py-2.5 text-sm font-medium text-ink-secondary transition-all hover:bg-oled-3 hover:shadow-[0_0_14px_1px_rgba(255,255,255,0.12)]">
+              Cancel
+            </button>
+            <div className="w-[220px]"><Btn onClick={() => onRevise(revisedCode)}>Re-submit for Review</Btn></div>
           </>
         ) : (
           <>
             {findings.length > 0 && (
-              <button onClick={openRevise} style={ghostBtnStyle}>Revise Code</button>
+              <button onClick={openRevise} className="cursor-pointer rounded-full border border-hairline-strong bg-oled-2 px-5 py-2.5 text-sm font-medium text-ink-secondary transition-all hover:bg-oled-3 hover:shadow-[0_0_14px_1px_rgba(255,255,255,0.12)]">
+                Revise Code
+              </button>
             )}
-            <PrimaryButton variant="green" onClick={onAcknowledge}>Acknowledge and Continue</PrimaryButton>
+            <div className="w-[220px]"><Btn variant="success" onClick={onAcknowledge}>Acknowledge and Continue</Btn></div>
           </>
         )}
       </div>
@@ -1139,68 +1375,35 @@ function TaskComplete({ taskIndex, totalTasks, onNext }: {
 }) {
   const isLast = taskIndex + 1 >= totalTasks;
   return (
-    <div style={{ backgroundColor: "#052e16", border: "1px solid #15803d", borderRadius: "12px", padding: "32px 24px", textAlign: "center" }}>
-      <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: "44px", height: "44px", borderRadius: "50%", backgroundColor: "#14532d", border: "1px solid #16a34a", marginBottom: "16px" }}>
-        <svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M4 10l4.5 4.5L16 6" stroke="#86efac" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+    <div className="rounded-2xl border border-success-deep/50 bg-success-surface/70 p-6 text-center">
+      <div className="check-pop mx-auto mb-4 flex h-11 w-11 items-center justify-center rounded-full border border-success bg-[#14532d]">
+        <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+          <path d="M4 10l4.5 4.5L16 6" stroke="#86efac" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
       </div>
-      <h2 style={{ fontSize: "18px", fontWeight: "700", color: "#f3f4f6", margin: "0 0 8px" }}>Task {taskIndex + 1} complete</h2>
-      <p style={{ fontSize: "14px", color: "#86efac", margin: "0 0 24px" }}>
+      <h2 className="mb-2 text-lg font-medium text-ink">Task {taskIndex + 1} complete</h2>
+      <p className="mb-6 text-sm text-success-ink">
         {isLast ? "That was the last task." : `${totalTasks - taskIndex - 1} task${totalTasks - taskIndex - 1 !== 1 ? "s" : ""} remaining.`}
       </p>
-      <div style={{ display: "inline-block", minWidth: "200px" }}>
-        <PrimaryButton variant={isLast ? "green" : "blue"} onClick={onNext}>
+      <div className="inline-block min-w-[200px]">
+        <Btn variant={isLast ? "success" : "primary"} onClick={onNext}>
           {isLast ? "Complete Study" : "Start Next Task →"}
-        </PrimaryButton>
+        </Btn>
       </div>
     </div>
   );
 }
 
-/* ── Shared style helpers ────────────────────────────────────────────────── */
-
-function InfoCard({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div style={{ backgroundColor: "#111827", border: "1px solid #1f2937", borderRadius: "12px", padding: "20px" }}>
-      <p style={{ fontSize: "11px", fontWeight: "500", textTransform: "uppercase", letterSpacing: "0.07em", color: "#9ca3af", margin: "0 0 12px" }}>{title}</p>
-      {children}
-    </div>
-  );
-}
-
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <p style={{ fontSize: "13px", fontWeight: "600", color: "#d1d5db", margin: "0 0 4px" }}>{children}</p>
-  );
-}
-
-function EditorSkeleton() {
-  return (
-    <div style={{ backgroundColor: "#1e1e1e", minHeight: "380px", padding: "20px 24px" }}>
-      {[78, 62, 91, 54, 70, 45, 83, 58, 74, 49].map((w, i) => (
-        <div key={i} className="skeleton" style={{ height: "14px", width: `${w}%`, borderRadius: "6px", marginBottom: "10px", animationDelay: `${i * 55}ms` }} />
-      ))}
-    </div>
-  );
-}
+/* ── Agent error ─────────────────────────────────────────────────────────── */
 
 function AgentError({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
-    <div style={{ backgroundColor: "#450a0a", border: "1px solid #991b1b", borderRadius: "12px", padding: "28px 24px" }}>
-      <p style={{ fontSize: "13px", fontWeight: "600", color: "#f87171", margin: "0 0 8px" }}>Pipeline error</p>
-      <p style={{ fontSize: "13px", lineHeight: "1.6", color: "#fca5a5", margin: "0 0 20px", fontFamily: "monospace" }}>{message}</p>
-      <div style={{ display: "inline-block", minWidth: "140px" }}>
-        <PrimaryButton onClick={onRetry}>Retry Task</PrimaryButton>
+    <div className="rounded-2xl border border-danger-border/60 bg-danger-surface/70 p-6">
+      <p className="mb-2 text-sm font-semibold text-danger-ink">Pipeline error</p>
+      <p className="mb-5 whitespace-pre-wrap font-mono text-[13px] leading-relaxed text-red-300">{message}</p>
+      <div className="inline-block min-w-[140px]">
+        <Btn onClick={onRetry}>Retry Task</Btn>
       </div>
     </div>
   );
 }
-
-const ghostBtnStyle: React.CSSProperties = {
-  padding: "10px 20px", fontSize: "14px", fontWeight: "500",
-  backgroundColor: "#1f2937", border: "1px solid #374151",
-  borderRadius: "8px", color: "#d1d5db", cursor: "pointer",
-};
-
-const gateLabelStyle: React.CSSProperties = {
-  display: "block", fontSize: "13px", fontWeight: "500", color: "#d1d5db", marginBottom: "8px",
-};

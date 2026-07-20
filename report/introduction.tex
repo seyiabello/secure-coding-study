@@ -1,0 +1,124 @@
+%% ============================================================
+%% COMM514 MSc Report -- Introduction Section
+%% University of Exeter
+%% ============================================================
+%% USAGE: If you have an existing main.tex with the title page,
+%% remove the preamble below and use \input{introduction} inside
+%% your existing document. The section content begins at
+%% \section{Introduction}.
+%%
+%% PREAMBLE (remove if embedding in existing document)
+%% ============================================================
+
+\documentclass[11pt, a4paper]{article}
+
+%% Times New Roman (pdfLaTeX-compatible; for XeLaTeX replace with:
+%%   \usepackage{fontspec} \setmainfont{Times New Roman}  )
+\usepackage{newtxtext, newtxmath}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+
+%% Page geometry: 2 cm margins, single column
+\usepackage[top=2cm, bottom=2cm, left=2cm, right=2cm]{geometry}
+
+%% Single line spacing
+\usepackage{setspace}
+\singlespacing
+
+%% Paragraph spacing: indent first line, no extra space between paragraphs
+\setlength{\parindent}{1.25em}
+\setlength{\parskip}{0pt}
+
+%% Harvard-style author-year citations
+\usepackage[authoryear, round]{natbib}
+\bibliographystyle{agsm}
+
+%% Suppress widows and orphans
+\widowpenalty=10000
+\clubpenalty=10000
+
+%% Micro-typography
+\usepackage{microtype}
+
+\begin{document}
+
+%% ============================================================
+%% INTRODUCTION
+%% ============================================================
+
+\section{Introduction}
+
+The past several years have witnessed a fundamental shift in professional software development practice. Artificial intelligence code generation tools, including GitHub Copilot, ChatGPT, and general-purpose large language models (LLMs) built on architectures such as GPT-4, are now embedded in the workflows of millions of developers worldwide. Industry adoption has accelerated rapidly: surveys conducted by major software development platforms consistently report that the majority of professional developers have incorporated at least one AI code generation tool into their daily practice \citep[see, for example,][]{pearce2022}. The promise of these systems is productivity, offering faster iteration, reduced boilerplate, and intelligent autocompletion that spans from individual functions to complete software modules. The security implications of this shift, however, have proven both less visible and more consequential than early adoption curves suggested.
+
+As AI-generated code enters production systems at scale, the security properties of that code become a matter of systemic concern rather than individual developer judgement. The fundamental problem is that LLMs are trained to produce code that functions correctly; this objective is not equivalent to producing code that is secure. A model optimised for syntactic correctness and functional plausibility may satisfy a unit test while simultaneously introducing a SQL injection vulnerability, a path traversal flaw, or an insecure cryptographic primitive. Without an architectural mechanism that enforces security reasoning at the point of generation, the efficiency gains of AI assistance risk accumulating security debts that are difficult to audit and expensive to remediate.
+
+\subsection*{Evidence from the Empirical Literature}
+
+The empirical literature on this problem is growing but still nascent. \citet{pearce2022} conducted one of the earliest systematic evaluations of the security properties of GitHub Copilot-generated code. Their study generated code across a range of scenarios drawn from the Common Weakness Enumeration (CWE) taxonomy and assessed the resulting output for exploitable vulnerabilities. The findings were striking: \citep[Pearce et al. 2022 -- insert specific finding on the proportion of generated scenarios found to be vulnerable]{pearce2022}. Critically, vulnerability was not confined to obscure edge cases; it was a consistent pattern across diverse task types, demonstrating that LLM-generated code cannot be assumed to be secure by default.
+
+\citet{perry2023} extended this line of inquiry through a controlled user study examining whether developers who used AI assistance were more or less likely to produce insecure code than those who did not. The results were counterintuitive: participants in the AI-assisted condition \citep[Perry et al. 2023 -- insert specific finding on insecure code rates or security scores]{perry2023}. More troubling still, those participants reported higher subjective confidence in the security of their output despite producing code that was demonstrably less secure. This finding is of particular significance because it suggests that AI assistance may actively suppress the epistemic caution that developers would otherwise apply to security-sensitive tasks. The effect size reported by \citet{perry2023} (Cohen's $d = 0.5$) informed the power analysis for the present study.
+
+More recent work has extended the scope of inquiry to multi-agent and iterative architectures. \citet{shukla2025} examined the effects of feedback loops on the security properties of LLM-generated code, finding that \citep[Shukla et al. 2025 -- insert specific finding on security degradation or improvement under iterative feedback]{shukla2025}. \citet{kennedy2025} investigated failure modes in human oversight of LLM agents, reporting that \citep[Kennedy et al. 2025 -- insert key finding on oversight failure rates or conditions under which oversight fails]{kennedy2025}. \citet{takerngsaksiri2025} documented the deployment of a human-in-the-loop LLM agent system (HULA) at Atlassian, demonstrating that \citep[Takerngsaksiri et al. 2025 -- insert key empirical finding on human oversight outcomes in production]{takerngsaksiri2025}. Collectively, this body of evidence indicates that architectural choices, including the degree of human oversight and the structural division of labour between agents, measurably affect the security properties of AI-generated outputs.
+
+\subsection*{The Research Gap}
+
+Despite this growing evidence base, a significant gap remains in the empirical literature. Existing studies evaluate AI code generation primarily in single-agent or single-model configurations, assessing a single system against a human baseline or a fixed set of known vulnerability patterns. What remains unexplored is whether a structured multi-agent pipeline, in which specialised agents perform discrete, sequential security functions such as threat modelling, independent code review, and formal verification, produces measurably more secure outputs than a single-agent system when applied to equivalent tasks under controlled experimental conditions.
+
+The distinction matters because multi-agent architectures do not simply multiply the quantity of LLM processing applied to a task. They impose a division of cognitive labour that mirrors established practices in secure software development, including threat modelling prior to implementation, peer code review independent of the original author, and post-implementation security testing. The authoritative MITRE CWE Top 25 list of the most dangerous software weaknesses \citep{mitre2024} identifies precisely the vulnerability categories that structured pre-generation threat analysis is designed to anticipate. Whether this architectural analogy translates into empirical reductions in vulnerability density is an open question that the existing literature does not answer.
+
+\subsection*{The Present Study}
+
+This study addresses that gap through a controlled experiment comparing two conditions. The first is a single-agent baseline in which a GPT-4o model generates code directly from a natural-language task description, operating without security-specific instruction or structured review. The second is a five-agent, human-orchestrated pipeline in which a Planner, Threat Modeller, Code Generator, Code Reviewer, and Verifier collaborate through a structured LangGraph workflow. The multi-agent condition integrates retrieval-augmented generation from the MITRE CWE Top 25 corpus \citep{mitre2024}, automated static analysis through a Bandit Model Context Protocol server, and human decision points at key stages of the pipeline. Both conditions use the same underlying model (GPT-4o) at a fixed temperature of 0.2, ensuring that any observed difference in output security is attributable to architectural structure rather than model capability.
+
+Participants, recruited from computer science and software engineering students at the University of Exeter (target $n = 52$, 26 per condition), each complete four coding tasks spanning common vulnerability categories: insecure credential storage (CWE-916, CWE-312), path traversal (CWE-22), SQL injection (CWE-89), and cross-site scripting (CWE-79). Task order is randomised per participant to control for learning effects. Generated code is evaluated using Bandit static analysis, yielding a comparable vulnerability density metric across conditions.
+
+\subsection*{Research Questions}
+
+The study is organised around two research questions. The primary question asks whether the five-agent multi-agent pipeline produces code with significantly lower vulnerability density than the single-agent baseline when participants complete equivalent coding tasks. The secondary question asks whether engagement with the multi-agent pipeline improves participant security reasoning, operationalised as the degree to which participants accept, modify, or reject agent security recommendations at the human decision points embedded in the workflow.
+
+\subsection*{Structure of the Report}
+
+The remainder of this report is structured as follows. The Literature Review provides a more detailed examination of the relevant literature on LLM code generation security, multi-agent system design, retrieval-augmented generation, and human-in-the-loop orchestration. The Methodology describes the experimental design, participant recruitment procedures, system architecture, and evaluation approach in full. The Results present the statistical analysis of vulnerability scores across conditions, using the Mann-Whitney U test appropriate for non-normally distributed ordinal security data. The Discussion interprets those findings in relation to the research questions, the existing literature, and the practical implications for AI-assisted software development. The Conclusion draws together the contributions of the study, acknowledges its limitations, and identifies directions for future research.
+
+%% ============================================================
+%% BIBLIOGRAPHY
+%% Include this section in your main bibliography file (.bib)
+%% rather than using the manual environment below.
+%% Placeholder entries are provided for Overleaf compatibility.
+%% ============================================================
+
+\begin{thebibliography}{99}
+
+\bibitem[Kennedy et al.(2025)]{kennedy2025}
+Kennedy, [First Initial].~[Second Author]. and [Third Author], [Year].
+\newblock [Full title -- insert from paper].
+\newblock \emph{[Journal or Conference Proceedings]}, [volume](issue), pp.~[pages].
+
+\bibitem[MITRE(2024)]{mitre2024}
+MITRE Corporation, 2024.
+\newblock \emph{2024 CWE Top 25 Most Dangerous Software Weaknesses}.
+\newblock Available at: \texttt{https://cwe.mitre.org/top25/archive/2024/2024\_cwe\_top25.html} [Accessed: insert date].
+
+\bibitem[Pearce et al.(2022)]{pearce2022}
+Pearce, H., Ahmad, B., Tan, B., Dolan-Gavitt, B. and Karri, R., 2022.
+\newblock Asleep at the keyboard? {A}ssessing the security of {G}it{H}ub {C}opilot's code contributions.
+\newblock In: \emph{Proceedings of the 43rd IEEE Symposium on Security and Privacy (S\&P 2022)}, San Francisco, CA, May 2022. IEEE, pp.~[insert pages].
+
+\bibitem[Perry et al.(2023)]{perry2023}
+Perry, N., Srivastava, M., Kumar, D. and Boneh, D., 2023.
+\newblock Do users write more insecure code with {AI} assistants?
+\newblock In: \emph{Proceedings of the 2023 ACM SIGSAC Conference on Computer and Communications Security (CCS '23)}, Copenhagen, Denmark, November 2023. ACM, pp.~[insert pages].
+
+\bibitem[Shukla et al.(2025)]{shukla2025}
+Shukla, [First Initial]., Joshi, [Initial]. and Syed, [Initial]., 2025.
+\newblock [Full title -- insert from paper].
+\newblock \emph{[Journal or Conference Proceedings]}, [volume](issue), pp.~[pages].
+
+\bibitem[Takerngsaksiri et al.(2025)]{takerngsaksiri2025}
+Takerngsaksiri, [First Initial]. et al., 2025.
+\newblock [Full title of HULA paper -- insert from paper].
+\newblock \emph{[Journal or Conference Proceedings]}, [volume](issue), pp.~[pages].
+
+\end{thebibliography}
+
+\end{document}

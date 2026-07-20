@@ -1,0 +1,120 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-01T00:00:00Z",
+  "title": "Design System: Secure Coding Study",
+  "extensions": {
+    "colorMeta": {
+      "canvas": { "role": "neutral", "displayName": "Canvas", "canonical": "#030712", "tonalRamp": ["#030712", "#0b1120", "#111827", "#1f2937", "#374151", "#6b7280", "#9ca3af", "#d1d5db"] },
+      "surface": { "role": "neutral", "displayName": "Surface", "canonical": "#111827", "tonalRamp": ["#030712", "#0b1120", "#111827", "#1f2937", "#374151", "#6b7280", "#9ca3af", "#d1d5db"] },
+      "surface-raised": { "role": "neutral", "displayName": "Surface Raised", "canonical": "#1f2937", "tonalRamp": ["#030712", "#0b1120", "#111827", "#1f2937", "#374151", "#6b7280", "#9ca3af", "#d1d5db"] },
+      "signal-blue": { "role": "primary", "displayName": "Signal Blue", "canonical": "#3b82f6", "tonalRamp": ["#172554", "#1e3a8a", "#1d4ed8", "#2563eb", "#3b82f6", "#60a5fa", "#93c5fd", "#dbeafe"] },
+      "success": { "role": "secondary", "displayName": "Success Green", "canonical": "#16a34a", "tonalRamp": ["#052e16", "#14532d", "#166534", "#15803d", "#16a34a", "#4ade80", "#86efac", "#dcfce7"] },
+      "severity-critical-bg": { "role": "tertiary", "displayName": "Severity — Critical", "canonical": "#7f1d1d", "tonalRamp": ["#450a0a", "#7f1d1d", "#991b1b", "#b91c1c", "#dc2626", "#ef4444", "#fca5a5", "#fecaca"] },
+      "severity-high-bg": { "role": "tertiary", "displayName": "Severity — High", "canonical": "#7c2d12", "tonalRamp": ["#431407", "#7c2d12", "#9a3412", "#c2410c", "#ea580c", "#fb923c", "#fdba74", "#fed7aa"] },
+      "severity-medium-bg": { "role": "tertiary", "displayName": "Severity — Medium", "canonical": "#713f12", "tonalRamp": ["#422006", "#713f12", "#854d0e", "#a16207", "#ca8a04", "#eab308", "#fde047", "#fef08a"] },
+      "severity-low-bg": { "role": "tertiary", "displayName": "Severity — Low", "canonical": "#14532d", "tonalRamp": ["#052e16", "#14532d", "#166534", "#15803d", "#16a34a", "#4ade80", "#86efac", "#dcfce7"] }
+    },
+    "typographyMeta": {
+      "title": { "displayName": "Title", "purpose": "Page-level headings (Welcome screen, completion screen)." },
+      "headline": { "displayName": "Headline", "purpose": "Stage headers within the multi-agent HITL flow (Planning, Threat Model, Code Review)." },
+      "body": { "displayName": "Body", "purpose": "Card content, descriptions, findings, mitigation text." },
+      "label": { "displayName": "Label", "purpose": "Uppercase tracked field labels inside cards only, never as page eyebrows." },
+      "mono": { "displayName": "Mono", "purpose": "CWE identifiers, coding timer, code content." }
+    },
+    "shadows": [],
+    "motion": [
+      { "name": "color-transition", "value": "transition-colors", "purpose": "Button/link hover and focus state changes — the only motion in the system." }
+    ],
+    "breakpoints": []
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The single primary action on screen (Generate, Approve, Submit).",
+      "html": "<button class=\"ds-btn-primary\">Approve Plan →</button>",
+      "css": ".ds-btn-primary { background: #2563eb; color: #ffffff; font-weight: 600; padding: 10px 24px; border-radius: 8px; border: none; transition: background 0.15s ease; } .ds-btn-primary:hover { background: #3b82f6; } .ds-btn-primary:focus-visible { outline: 2px solid #60a5fa; outline-offset: 2px; } .ds-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }"
+    },
+    {
+      "name": "Advance Button",
+      "kind": "button",
+      "refersTo": "button-success",
+      "description": "Advance to next task/step — visually distinct from Primary so it's never confused with 'do the current thing'.",
+      "html": "<button class=\"ds-btn-success\">Complete Task →</button>",
+      "css": ".ds-btn-success { background: #15803d; color: #ffffff; font-weight: 600; padding: 10px 24px; border-radius: 8px; border: none; transition: background 0.15s ease; } .ds-btn-success:hover { background: #16a34a; } .ds-btn-success:focus-visible { outline: 2px solid #4ade80; outline-offset: 2px; }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Secondary/back action.",
+      "html": "<button class=\"ds-btn-ghost\">← Back to editor</button>",
+      "css": ".ds-btn-ghost { background: #1f2937; color: #d1d5db; font-weight: 500; padding: 10px 20px; border-radius: 8px; border: none; transition: background 0.15s ease; } .ds-btn-ghost:hover { background: #374151; }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Primary content container — flat, bordered, no shadow.",
+      "html": "<div class=\"ds-card\"><p class=\"ds-card-label\">Scope</p><p class=\"ds-card-body\">Card content goes here.</p></div>",
+      "css": ".ds-card { background: #111827; border: 1px solid #1f2937; border-radius: 12px; padding: 20px; } .ds-card-label { font-size: 12px; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; color: #6b7280; margin-bottom: 12px; } .ds-card-body { font-size: 14px; line-height: 1.6; color: #d1d5db; }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Standard text/textarea field.",
+      "html": "<input class=\"ds-input\" placeholder=\"e.g. P01\" />",
+      "css": ".ds-input { background: #1f2937; color: #f3f4f6; border: 1px solid #374151; border-radius: 8px; padding: 8px 12px; font-size: 14px; } .ds-input::placeholder { color: #6b7280; } .ds-input:focus-visible { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 1px #3b82f6; }"
+    },
+    {
+      "name": "Severity Badge",
+      "kind": "chip",
+      "refersTo": "badge-severity",
+      "description": "Colorblind-safe severity indicator — always paired with a visible text label, never hue-only.",
+      "html": "<span class=\"ds-badge-critical\">Critical</span>",
+      "css": ".ds-badge-critical { display: inline-block; font-size: 12px; font-weight: 500; padding: 2px 8px; border-radius: 9999px; background: #7f1d1d; color: #fecaca; border: 1px solid #b91c1c; }"
+    },
+    {
+      "name": "Stage Pill",
+      "kind": "chip",
+      "refersTo": "stage-pill",
+      "description": "Multi-step progress indicator shared identically across both study conditions.",
+      "html": "<span class=\"ds-pill-active\">Threats</span>",
+      "css": ".ds-pill-active { display: inline-block; font-size: 12px; font-weight: 500; padding: 4px 12px; border-radius: 9999px; background: #2563eb; color: #ffffff; white-space: nowrap; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Instrument Panel",
+    "overview": "This is a dark console, not an app. Every element on screen is a readout — a severity badge, an elapsed-time counter, a stage pill, a CWE identifier — and readouts don't perform for the viewer; they report. The system is built from a single stepped gray scale (canvas → surface → surface-raised) with one accent (Signal Blue) reserved for the current action or focal point, plus a small fixed vocabulary of status colors (success, danger, warning, and four severity tiers) that never shift meaning between screens. Because this instrument is used identically across two experimental conditions, the panel must read as one coherent system regardless of which pipeline is driving it — no condition gets a more polished dial than the other. It explicitly rejects the Streamlit-prototype look and rejects gamification entirely: no confetti, no reward badges, no playful copy. Confidence comes from restraint, not decoration.",
+    "keyCharacteristics": [
+      "Single dark neutral scale, stepped by 2-3 steps of gray per surface layer, never more",
+      "One accent color (Signal Blue) used sparingly, only for current/active/primary-action state",
+      "Flat by default — depth comes from tonal layering and 1px borders, not shadows",
+      "A fixed, non-negotiable status/severity palette reused identically everywhere it appears",
+      "Uppercase tracked micro-labels used only as field/section labels inside cards, never as decorative page-level eyebrows"
+    ],
+    "rules": [
+      { "name": "The One Signal Rule", "body": "Signal Blue is the only accent in the system. If a second accent color feels necessary anywhere outside the fixed status/severity set, that's a sign the screen needs restructuring, not a new color.", "section": "colors" },
+      { "name": "The Redundant Severity Rule", "body": "Severity and status must never be communicated by hue alone. Every severity badge carries its text label at full contrast, and every pass/fail state pairs its color with a ✓/✗ or explicit word. This is a research-data-integrity requirement, not a style preference.", "section": "colors" },
+      { "name": "The Label-Not-Eyebrow Rule", "body": "Uppercase tracked micro-labels exist to name a field inside a card, not to decorate the top of a whole page section.", "section": "typography" },
+      { "name": "The Flat Instrument Rule", "body": "No drop shadows, no glassmorphism, no blur. If a component needs to feel raised, move it one step up the neutral scale instead.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do keep Signal Blue as the only accent color; every other color is a neutral or a fixed status/severity token.",
+      "Do pair every severity/status color with a text label or icon — never rely on hue alone.",
+      "Do build baseline and multi-agent screens from the exact same component set at the same visual weight.",
+      "Do use flat surfaces and 1px borders for all depth.",
+      "Do keep uppercase tracked labels scoped to naming a field inside a card."
+    ],
+    "donts": [
+      "Don't introduce a second accent color, gradient, or glassmorphism effect anywhere in the system.",
+      "Don't add gamification: no confetti, streak counters, reward badges, or playful microcopy.",
+      "Don't let one study condition end up with more polish, color, or component variety than the other.",
+      "Don't use uppercase tracked labels as page-level decorative eyebrows above whole sections.",
+      "Don't add drop shadows or elevation effects — this system is flat by doctrine.",
+      "Don't leave debug-only UI visible to participants; strip it before any real session."
+    ]
+  }
+}

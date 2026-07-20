@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Threat Modeller Architecture Preview</title>
+<style>
+  body { background: #fff; margin: 0; padding: 20px; font-family: Arial, sans-serif; }
+  .canvas { position: relative; width: 760px; height: 970px; }
+
+  .box {
+    position: absolute;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 11px;
+    line-height: 1.5;
+    padding: 6px 8px;
+    box-sizing: border-box;
+  }
+  .box b { font-size: 12px; }
+
+  .pipeline-bar {
+    position: absolute;
+    left: 0; top: 10px;
+    width: 760px; height: 40px;
+    background: #f5f5f5;
+    border: 1px solid #666;
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; color: #333;
+  }
+  .pipeline-bar b { margin: 0 2px; }
+
+  .input-box  { background: #dae8fc; border: 1.5px solid #6c8ebf; }
+  .rag-box    { background: #e1d5e7; border: 1.5px solid #9673a6; }
+  .rag-out    { background: #d5e8d4; border: 1.5px solid #82b366; }
+  .nvd-box    { background: #f8cecc; border: 1.5px solid #b85450; }
+  .cve-box    { background: #ffe6cc; border: 1.5px solid #d6b656; }
+  .gpt-box    { background: #d5e8d4; border: 1.5px solid #82b366; }
+  .out-box    { background: #f5f5f5; border: 1.5px solid #666; color: #333; }
+
+  .section-label {
+    position: absolute;
+    font-size: 12px;
+    font-weight: bold;
+    text-align: center;
+  }
+
+  .next-label {
+    position: absolute;
+    font-size: 13px;
+    font-weight: bold;
+    text-align: center;
+    color: #333;
+  }
+
+  svg.arrows {
+    position: absolute;
+    top: 0; left: 0;
+    width: 760px; height: 970px;
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+<div class="canvas">
+
+  <!-- Pipeline bar -->
+  <div class="pipeline-bar">
+    Planner &nbsp;→&nbsp; <b>Threat Modeller</b> &nbsp;→&nbsp; Code Generator &nbsp;→&nbsp; Code Reviewer &nbsp;→&nbsp; Verifier
+  </div>
+
+  <!-- INPUTS -->
+  <div class="box input-box" style="left:60px; top:80px; width:200px; height:55px;">
+    <b>Coding Task</b>
+  </div>
+  <div class="box input-box" style="left:470px; top:80px; width:230px; height:55px;">
+    <b>Planner Output</b><br>scope · security requirements
+  </div>
+
+  <!-- Section labels -->
+  <div class="section-label" style="left:60px; top:165px; width:240px; color:#6200ea;">RAG Pipeline</div>
+  <div class="section-label" style="left:460px; top:420px; width:230px; color:#b46504;">MCP Tool</div>
+
+  <!-- RAG STEP 1: Query Rewrite -->
+  <div class="box rag-box" style="left:60px; top:200px; width:240px; height:65px;">
+    <b>Query Rewrite</b><br>GPT-4o expands task into<br>security search terms + domains
+  </div>
+
+  <!-- RAG STEP 2: ChromaDB -->
+  <div class="box rag-box" style="left:60px; top:320px; width:240px; height:70px;">
+    <b>ChromaDB</b><br>MITRE CWE Top 25 corpus<br>cosine similarity · top-10 candidates
+  </div>
+
+  <!-- RAG STEP 3: LLM Re-rank -->
+  <div class="box rag-box" style="left:60px; top:445px; width:240px; height:60px;">
+    <b>LLM Re-rank</b><br>GPT-4o selects top 3<br>most relevant CWEs
+  </div>
+
+  <!-- NVD: NIST NVD API (same top as LLM Re-rank) -->
+  <div class="box nvd-box" style="left:460px; top:445px; width:230px; height:65px;">
+    <b>NIST NVD API</b><br>via MCP stdio server<br>live government CVE database
+  </div>
+
+  <!-- RAG OUTPUT: CWE Chunks -->
+  <div class="box rag-out" style="left:60px; top:565px; width:240px; height:55px;">
+    <b>Top 3 CWE Chunks</b><br>descriptions · mitigations · examples
+  </div>
+
+  <!-- NVD OUTPUT: Recent CVEs -->
+  <div class="box cve-box" style="left:460px; top:565px; width:230px; height:60px;">
+    <b>3 Recent CVEs</b><br>severity · CVSS score<br>CWE mapping · NVD link
+  </div>
+
+  <!-- GPT-4o Synthesis -->
+  <div class="box gpt-box" style="left:170px; top:690px; width:420px; height:65px;">
+    <b>GPT-4o</b> &nbsp;·&nbsp; temp: 0.2 &nbsp;·&nbsp; JSON mode<br>
+    synthesises CWE context + CVEs + task + plan
+  </div>
+
+  <!-- OUTPUT: ThreatEntry List -->
+  <div class="box out-box" style="left:220px; top:820px; width:320px; height:85px;">
+    <b>ThreatEntry List</b><br>
+    cwe_id &nbsp;·&nbsp; name &nbsp;·&nbsp; severity<br>
+    task-specific description<br>
+    actionable mitigation
+  </div>
+
+  <!-- Next agent -->
+  <div class="next-label" style="left:220px; top:922px; width:320px;">
+    ↓ &nbsp; Code Generator (next agent)
+  </div>
+
+  <!-- SVG ARROWS -->
+  <svg class="arrows" viewBox="0 0 760 970">
+    <defs>
+      <marker id="arr" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0,8 3,0 6" fill="#555"/>
+      </marker>
+      <marker id="arr-p" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0,8 3,0 6" fill="#9673a6"/>
+      </marker>
+      <marker id="arr-b" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0,8 3,0 6" fill="#6c8ebf"/>
+      </marker>
+    </defs>
+
+    <!-- Coding Task → Query Rewrite -->
+    <line x1="160" y1="135" x2="160" y2="198" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+
+    <!-- Query Rewrite → ChromaDB -->
+    <line x1="180" y1="265" x2="180" y2="318" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+
+    <!-- ChromaDB → LLM Re-rank -->
+    <line x1="180" y1="390" x2="180" y2="443" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+
+    <!-- LLM Re-rank → CWE Chunks -->
+    <line x1="180" y1="505" x2="180" y2="563" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+
+    <!-- LLM Re-rank → NIST NVD (DOTTED, horizontal) -->
+    <line x1="302" y1="475" x2="458" y2="475" stroke="#9673a6" stroke-width="1.5" stroke-dasharray="6,4" marker-end="url(#arr-p)"/>
+    <text x="380" y="468" text-anchor="middle" font-size="10" fill="#9673a6" font-family="Arial">top CWE as keyword</text>
+
+    <!-- NIST NVD → Recent CVEs -->
+    <line x1="575" y1="510" x2="575" y2="563" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+
+    <!-- CWE Chunks → GPT-4o -->
+    <line x1="180" y1="620" x2="180" y2="688" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+    <text x="155" y="660" text-anchor="end" font-size="10" fill="#9673a6" font-family="Arial">CWE context</text>
+
+    <!-- Recent CVEs → GPT-4o -->
+    <line x1="575" y1="625" x2="575" y2="688" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+    <text x="600" y="660" text-anchor="start" font-size="10" fill="#b85450" font-family="Arial">CVE context</text>
+
+    <!-- Planner Output → GPT-4o (goes down right side) -->
+    <polyline points="585,135 700,135 700,722 592,722" fill="none" stroke="#6c8ebf" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr-b)"/>
+    <text x="710" y="430" text-anchor="start" font-size="10" fill="#6c8ebf" font-family="Arial">plan +</text>
+    <text x="710" y="443" text-anchor="start" font-size="10" fill="#6c8ebf" font-family="Arial">requirements</text>
+
+    <!-- GPT-4o → ThreatEntry -->
+    <line x1="380" y1="755" x2="380" y2="818" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+
+    <!-- ThreatEntry → Code Generator label -->
+    <line x1="380" y1="905" x2="380" y2="920" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+  </svg>
+
+</div>
+</body>
+</html>

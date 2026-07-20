@@ -1,0 +1,49 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [
+      "frontend/app/globals.css",
+      "frontend/app/about/page.tsx",
+      "frontend/app/info/page.tsx",
+      "frontend/app/faq/page.tsx"
+    ],
+    "ignoreValues": [
+      {
+        "rule": "design-system-color",
+        "value": "#ffffff",
+        "reason": "DESIGN.md button-primary textColor is #ffffff — intentional white text on primary and success buttons",
+        "createdAt": "2026-07-03T10:32:51.677Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#1e1e1e",
+        "reason": "Monaco vs-dark theme background — used in EditorSkeleton to match editor mount color",
+        "createdAt": "2026-07-03T00:00:00.000Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "rgba(215,75,15,0.88)",
+        "reason": "Aurora orange-red glow column — decorative gradient, not a design token",
+        "createdAt": "2026-07-18T14:21:51.695Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "rgba(245,55,20,0.65)",
+        "reason": "Aurora inner orange beam — decorative gradient",
+        "createdAt": "2026-07-18T14:21:51.831Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "rgba(18,60,225,0.85)",
+        "reason": "Aurora blue glow column — decorative gradient",
+        "createdAt": "2026-07-18T14:21:51.951Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "rgba(75,45,210,0.55)",
+        "reason": "Aurora indigo top-right — decorative gradient",
+        "createdAt": "2026-07-18T14:21:52.069Z"
+      }
+    ]
+  }
+}

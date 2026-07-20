@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Verifier Architecture Preview</title>
+<style>
+  body { background: #fff; margin: 0; padding: 20px; font-family: Arial, sans-serif; }
+  .canvas { position: relative; width: 760px; height: 870px; }
+
+  .box {
+    position: absolute;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 11px;
+    line-height: 1.6;
+    padding: 6px 10px;
+    box-sizing: border-box;
+  }
+
+  .pipeline-bar {
+    position: absolute; left: 0; top: 10px;
+    width: 760px; height: 40px;
+    background: #f5f5f5; border: 1px solid #666; border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; color: #333;
+  }
+
+  .input-box    { background: #dae8fc; border: 1.5px solid #6c8ebf; }
+  .mcp-box      { background: #f8cecc; border: 1.5px solid #b85450; }
+  .sandbox-box  { background: #ffe6cc; border: 1.5px solid #d6b656; }
+  .rag-box      { background: #e1d5e7; border: 1.5px solid #9673a6; }
+  .assembly-box { background: #fff2cc; border: 1.5px solid #d6b656; }
+  .gpt-box      { background: #d5e8d4; border: 1.5px solid #82b366; }
+  .output-box   { background: #f5f5f5; border: 1.5px solid #666; color: #333; }
+
+  .section-label { position: absolute; font-size: 11px; font-weight: bold; text-align: center; }
+  .next-label    { position: absolute; font-size: 13px; font-weight: bold; text-align: center; color: #333; }
+
+  svg.arrows { position: absolute; top: 0; left: 0; width: 760px; height: 870px; pointer-events: none; }
+</style>
+</head>
+<body>
+<div class="canvas">
+
+  <!-- Pipeline bar -->
+  <div class="pipeline-bar">
+    Planner &nbsp;→&nbsp; Threat Modeller &nbsp;→&nbsp; Code Generator &nbsp;→&nbsp; Code Reviewer &nbsp;→&nbsp; <b>Verifier</b>
+  </div>
+
+  <!-- INPUTS -->
+  <div class="box input-box" style="left:60px; top:80px; width:260px; height:60px;">
+    <b>Generated Code</b><br>complete Python function
+  </div>
+  <div class="box input-box" style="left:440px; top:80px; width:260px; height:60px;">
+    <b>Threat Model</b><br>CWE entries · required mitigations
+  </div>
+
+  <!-- Section labels -->
+  <div class="section-label" style="left:30px; top:175px; width:395px; color:#b46504;">MCP Tools (independent)</div>
+  <div class="section-label" style="left:475px; top:175px; width:255px; color:#6200ea;">RAG Pipeline (independent)</div>
+
+  <!-- THREE INDEPENDENT CHECKS -->
+  <div class="box mcp-box" style="left:30px; top:195px; width:185px; height:75px;">
+    <b>run_bandit</b> · MCP stdio<br>static analysis · AST scan<br>independent from Code Reviewer
+  </div>
+
+  <div class="box sandbox-box" style="left:235px; top:195px; width:185px; height:75px;">
+    <b>execute_code</b> · MCP stdio<br>sandboxed subprocess · timeout<br>exit code · stdout · stderr
+  </div>
+
+  <div class="box rag-box" style="left:475px; top:195px; width:255px; height:75px;">
+    <b>CWE Corpus RAG</b><br>query rewrite → ChromaDB<br>LLM re-rank → top 3 chunks
+  </div>
+
+  <!-- PROMPT ASSEMBLY -->
+  <div class="box assembly-box" style="left:60px; top:345px; width:640px; height:55px;">
+    <b>Prompt Assembly</b><br>
+    code &nbsp;+&nbsp; threat model &nbsp;+&nbsp; Bandit findings &nbsp;+&nbsp; CWE context &nbsp;+&nbsp; sandbox execution result
+  </div>
+
+  <!-- GPT-4o -->
+  <div class="box gpt-box" style="left:155px; top:465px; width:450px; height:70px;">
+    <b>GPT-4o</b> &nbsp;·&nbsp; temp: 0.2 &nbsp;·&nbsp; JSON mode<br>
+    per-threat PASS/FAIL verdict<br>
+    strict judge · partial implementation = FAIL
+  </div>
+
+  <!-- VERIFICATION RESULT OUTPUT -->
+  <div class="box output-box" style="left:80px; top:605px; width:600px; height:100px;">
+    <b>VerificationResult</b><br>
+    overall_pass &nbsp;·&nbsp; threats_checked (PASS/FAIL per CWE · specific notes)<br>
+    bandit_findings &nbsp;·&nbsp; execution_result &nbsp;·&nbsp; notes<br>
+    <span style="color:#2e7d32; font-weight:bold;">final_code → stored for evaluation log &nbsp;·&nbsp; current_stage: complete</span>
+  </div>
+
+  <!-- SVG ARROWS -->
+  <svg class="arrows" viewBox="0 0 760 870">
+    <defs>
+      <marker id="arr" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0,8 3,0 6" fill="#555"/>
+      </marker>
+      <marker id="arr-p" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0,8 3,0 6" fill="#9673a6"/>
+      </marker>
+      <marker id="arr-r" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0,8 3,0 6" fill="#b85450"/>
+      </marker>
+      <marker id="arr-b" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0,8 3,0 6" fill="#6c8ebf"/>
+      </marker>
+    </defs>
+
+    <!-- Generated Code → Bandit -->
+    <polyline points="190,140 190,165 122,165 122,193" fill="none" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+
+    <!-- Generated Code → Sandbox -->
+    <polyline points="190,140 190,165 327,165 327,193" fill="none" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+
+    <!-- Generated Code → Prompt Assembly (code, dotted) -->
+    <polyline points="320,110 410,110 410,343" fill="none" stroke="#6c8ebf" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr-b)"/>
+    <text x="415" y="230" font-size="10" fill="#6c8ebf" font-family="Arial">code</text>
+
+    <!-- Threat Model → Prompt Assembly (dotted, right side) -->
+    <polyline points="570,140 570,165 700,165 700,372 702,372" fill="none" stroke="#6c8ebf" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr-b)"/>
+    <text x="705" y="270" font-size="10" fill="#6c8ebf" font-family="Arial">threat</text>
+    <text x="705" y="283" font-size="10" fill="#6c8ebf" font-family="Arial">model</text>
+
+    <!-- Bandit → Prompt Assembly -->
+    <line x1="122" y1="270" x2="122" y2="343" stroke="#b85450" stroke-width="1.5" marker-end="url(#arr-r)"/>
+    <text x="55" y="312" font-size="10" fill="#b85450" font-family="Arial">findings</text>
+
+    <!-- Sandbox → Prompt Assembly -->
+    <line x1="327" y1="270" x2="327" y2="343" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+    <text x="332" y="312" font-size="10" fill="#d6b656" font-family="Arial">exec result</text>
+
+    <!-- RAG → Prompt Assembly -->
+    <line x1="602" y1="270" x2="602" y2="343" stroke="#9673a6" stroke-width="1.5" marker-end="url(#arr-p)"/>
+    <text x="607" y="312" font-size="10" fill="#9673a6" font-family="Arial">CWE context</text>
+
+    <!-- Prompt Assembly → GPT-4o -->
+    <line x1="380" y1="400" x2="380" y2="463" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+
+    <!-- GPT-4o → VerificationResult -->
+    <line x1="380" y1="535" x2="380" y2="603" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+  </svg>
+
+</div>
+</body>
+</html>

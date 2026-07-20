@@ -45,14 +45,14 @@ Produce a threat model with 3 to 5 threats. For each threat:
   name        : the short CWE name, e.g. "SQL Injection"
   severity    : one of "Critical", "High", or "Medium"
   description : one or two sentences explaining how this specific threat applies
-                to THIS task — not a generic CWE description. Be concrete.
+                to THIS task, not a generic CWE description. Be concrete.
                 Example: "The login function builds a SQL query by concatenating
                 the username string, allowing an attacker to inject SQL and
                 bypass authentication."
   mitigation  : one or two sentences telling the Code Generator exactly what to
                 do. This will be used as a direct instruction to the developer.
                 Example: "Use parameterised queries (cursor.execute with ?
-                placeholders) — never concatenate user input into SQL strings."
+                placeholders). Never concatenate user input into SQL strings."
 
 Rules:
   - Only include threats relevant to this task. Do not include generic threats

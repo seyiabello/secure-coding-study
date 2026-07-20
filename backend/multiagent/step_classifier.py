@@ -100,7 +100,7 @@ def classify_steps(plan: dict, threats: list[dict]) -> list[dict]:
 
     steps_text = "\n".join(f"{i}. {s}" for i, s in enumerate(steps))
     threats_text = "\n".join(
-        f"  [{t['cwe_id']} — {t['name']}]\n"
+        f"  [{t['cwe_id']}: {t['name']}]\n"
         f"    Mitigation: {t['mitigation']}"
         for t in threats
     )

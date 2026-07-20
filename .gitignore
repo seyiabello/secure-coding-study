@@ -1,8 +1,14 @@
 .env
 venv/
 logs/*.jsonl
+backend/logs/
+.playwright-mcp/
 __pycache__/
 *.pyc
 .DS_Store
 chroma_db/
 tests/venv/
+terraform/terraform.tfvars
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.backup

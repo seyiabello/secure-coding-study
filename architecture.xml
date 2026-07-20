@@ -1,0 +1,228 @@
+<mxGraphModel dx="1422" dy="762" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+
+    <!-- ===== TOP ROW: DevOps Pipeline ===== -->
+
+    <!-- Engineer -->
+    <mxCell id="10" value="Engineer" style="shape=mxgraph.aws4.user;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#232F3D;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="55" y="55" width="42" height="42" as="geometry" />
+    </mxCell>
+
+    <!-- VS Code -->
+    <mxCell id="11" value="VS Code" style="shape=image;verticalLabelPosition=bottom;labelBackgroundColor=default;verticalAlign=top;aspect=fixed;imageAspect=0;image=data:image/svg+xml,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cGF0aCBmaWxsPSIjMDA3QUNDIiBkPSJNNzUuMiAyLjVMMzggNDMuMiAxNi44IDI1IDAgMzQuMmwuMSAzMS41TDAgNjUuOGwxNi44IDkuMiAyMS4yLTE4LjIgMzcuMiA0MC43IDI1LTEyVjE0LjV6Ii8+PHBhdGggZmlsbD0iI2ZmZiIgZD0iTTM4IDQzLjJMNzUuMiA4NC41bC0xNiA4LjMtMjEtMjAuNy0yMSAxOC4yLTEyLTYuNVY2Mi40bDEyLTYuNiAyMC44IDE4LjIgMjItMjIuNkwyMiA0My4yIDM4IDI1bDM3LjIgMTguMnoiIG9wYWNpdHk9Ii4xIi8+PC9zdmc+;" vertex="1" parent="1">
+      <mxGeometry x="172" y="50" width="45" height="45" as="geometry" />
+    </mxCell>
+
+    <!-- Git -->
+    <mxCell id="12" value="Git" style="shape=image;verticalLabelPosition=bottom;labelBackgroundColor=default;verticalAlign=top;aspect=fixed;imageAspect=0;image=data:image/svg+xml,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cGF0aCBmaWxsPSIjRjA1MDMyIiBkPSJNOTcuMiA0NS4yTDU0LjggMi44Yy0xLjYtMS42LTQuMi0xLjYtNS44IDBMNDAgMTYuOGw3LjQgNy40YzEuNy0uNiAzLjYtLjIgNSAxLjJsLjIuMmMxLjQgMS40IDEuOCAzLjQgMS4yIDVsMTAgMTBjMS43LS42IDMuNi0uMiA1IDEuMiAxLjkgMS45IDEuOSA1IDAgNi45LTEuOSAxLjktNSAxLjktNi45IDBzLTEuOS01IDAtNi45Yy41LS41IDEuMS0uOCAxLjctMUw1OCAzMC44djI3LjRjLjYuMiAxLjIuNiAxLjcgMSAxLjkgMS45IDEuOSA1IDAgNi45LTEuOSAxLjktNSAxLjktNi45IDBzLTEuOS01IDAtNi45Yy41LS41IDEuMS0uOCAxLjctMVY0MC40bC0xLjEtMS4xYy0xLjQtMS40LTEuOC0zLjQtMS4yLTVMMzkgMjEuN2wtMzYuMiAzNmMtMS42IDEuNi0xLjYgNC4yIDAgNS44bDQyLjQgNDIuNGMxLjYgMS42IDQuMiAxLjYgNS44IDBMNDY0LjggNjkuNCA1NS45IDU4LjMgNDguNiA1MSA0Mi44IDU2LjhjLS42LjYtMS40IDEtMi4yIDEtLjggMC0xLjYtLjMtMi4yLTEtMS4yLTEuMi0xLjItMy4yIDAtNC40LjYtLjYgMS40LTEgMi4yLTEgLjggMCAxLjYuMyAyLjIgMWw3LjMtNy4zLTcuNC03LjRMMzEgNDUuNSAzNiA0MC42bDEyLjYgMTIuNiAxNy40LTE3LjQtMTQuMi0xNC4yTDk3LjIgNTFjMS42LTEuNiAxLjYtNC4yIDAtNS44eiIvPjwvc3ZnPg==;" vertex="1" parent="1">
+      <mxGeometry x="307" y="50" width="45" height="45" as="geometry" />
+    </mxCell>
+
+    <!-- GitHub -->
+    <mxCell id="13" value="GitHub" style="shape=image;verticalLabelPosition=bottom;labelBackgroundColor=default;verticalAlign=top;aspect=fixed;imageAspect=0;image=data:image/svg+xml,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA5OCA5OCI+PHBhdGggZmlsbD0iIzI0MjkyZSIgZD0iTTQ4LjkgMEM4IDAgMCA4IDAgNDguOWMwIDMzLjMgMjEuNiA2MSA1MS41IDcxIDMuOC43IDUuMS0xLjYgNS4xLTMuNiAwLTEuNy0uMS03LjMtLjEtMTMtMjAuOSA0LjUtMjUuNS05LTI1LjUtOS0zLjQtOC44LTguNC0xMS4xLTguNC0xMS4xLTYuOS00LjcuNS00LjYuNS00LjYgNy42LjUgMTEuNiA3LjggMTEuNiA3LjggNi43IDExLjUgMTcuNiA4LjIgMjEuOSA2LjMuNy00LjkgMi42LTguMiA0LjctMTAtMTYuNy0xLjktMzQuMi04LjMtMzQuMi0zNy4xIDAtOC4yIDIuOS0xNC45IDcuOC0yMC4yLS44LTItMy40LTkuNi44LTE5LjkgMCAwIDYuNC0yIDIwLjkgNy44IDYuMS0xLjcgMTItMi41IDE4LjMtMi41IDYuMyAwIDEyLjIuOCAxOC4zIDIuNSAxNC41LTkuOCAyMC45LTcuOCAyMC45LTcuOCA0LjIgMTAuMiAxLjYgMTcuOC44IDE5LjkgNC44IDUuMyA3LjggMTIgNy44IDIwLjIgMCAyOC45LTE3LjYgMzUuMi0zNC40IDM3IC4zLjQgNC40IDIuNyAyLjcgOCAwIDAgMCAxNC41IDAgMjcgMCAxLjcgMS4yIDQgNS4yIDMuM0M3Ni4zIDEwOS44IDk4IDgybDAgMCA5NyA0OC45QzkgOCAwIDAgMCA0OC45eiIvPjwvc3ZnPg==;" vertex="1" parent="1">
+      <mxGeometry x="442" y="50" width="45" height="45" as="geometry" />
+    </mxCell>
+
+    <!-- GitHub Actions -->
+    <mxCell id="14" value="GitHub Actions" style="shape=image;verticalLabelPosition=bottom;labelBackgroundColor=default;verticalAlign=top;aspect=fixed;imageAspect=0;image=data:image/svg+xml,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iIzIwODhGRiIgZD0iTTEyIDNhOSA5IDAgMSAxIDAgMTggOSA5IDAgMCAxIDAtMTh6bTAgMmE3IDcgMCAxIDAgMCAxNCA3IDcgMCAwIDAgMC0xNHptMCAyYTUgNSAwIDEgMSAwIDEwQTUgNSAwIDAgMSAxMiA3em0wIDJhMyAzIDAgMSAwIDAgNiAzIDMgMCAwIDAgMC02eiIvPjwvc3ZnPg==;" vertex="1" parent="1">
+      <mxGeometry x="578" y="50" width="45" height="45" as="geometry" />
+    </mxCell>
+
+    <!-- Terraform -->
+    <mxCell id="15" value="Terraform" style="shape=image;verticalLabelPosition=bottom;labelBackgroundColor=default;verticalAlign=top;aspect=fixed;imageAspect=0;image=data:image/svg+xml,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjggMTI4Ij48cGF0aCBmaWxsPSIjNjIzQ0U0IiBkPSJNNzcuOTQxIDc4LjkxMnY0MC42NjNsMzUuMjE3LTIwLjMyNFY1OC41ODh6TTQuODQyIDU4LjU4OHY0MC42NjNsMzUuMjE2IDIwLjMyNFY3OC45MTJ6TTE1LjA5IDM4LjIzOGwzNS4yMTcgMjAuMzI0IDM1LjIxNy0yMC4zMjRMMTUuMDkgMTcuOTEzem01Ny42MzQgNDQuMTgzbC0zNS4yMTcgMjAuMzI1djIuN2wzNS4yMTcgMjAuMzI0IDM1LjIxNi0yMC4zMjR2LTIuN3oiLz48L3N2Zz4=;" vertex="1" parent="1">
+      <mxGeometry x="55" y="195" width="45" height="45" as="geometry" />
+    </mxCell>
+
+    <!-- ===== FLOW LABELS ===== -->
+
+    <mxCell id="20" value="Commits&#xa;config &amp; code" style="text;html=1;align=center;verticalAlign=middle;strokeColor=none;fillColor=none;fontSize=9;fontColor=#666666;" vertex="1" parent="1">
+      <mxGeometry x="118" y="45" width="55" height="30" as="geometry" />
+    </mxCell>
+
+    <mxCell id="21" value="Push code" style="text;html=1;align=center;verticalAlign=middle;strokeColor=none;fillColor=none;fontSize=9;fontColor=#666666;" vertex="1" parent="1">
+      <mxGeometry x="255" y="45" width="55" height="30" as="geometry" />
+    </mxCell>
+
+    <mxCell id="22" value="Stores config &amp;&#xa;source code" style="text;html=1;align=center;verticalAlign=middle;strokeColor=none;fillColor=none;fontSize=9;fontColor=#666666;" vertex="1" parent="1">
+      <mxGeometry x="390" y="45" width="55" height="30" as="geometry" />
+    </mxCell>
+
+    <mxCell id="23" value="Docker image&#xa;pipeline" style="text;html=1;align=center;verticalAlign=middle;strokeColor=none;fillColor=none;fontSize=9;fontColor=#2088FF;" vertex="1" parent="1">
+      <mxGeometry x="560" y="130" width="75" height="30" as="geometry" />
+    </mxCell>
+
+    <mxCell id="24" value="Provision&#xa;infrastructure" style="text;html=1;align=center;verticalAlign=middle;strokeColor=none;fillColor=none;fontSize=9;fontColor=#623CE4;" vertex="1" parent="1">
+      <mxGeometry x="100" y="175" width="60" height="30" as="geometry" />
+    </mxCell>
+
+    <!-- ===== AZURE CLOUD BOUNDARY ===== -->
+
+    <mxCell id="30" value="Azure Cloud" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f4fb;strokeColor=#0089D6;strokeWidth=2;align=left;verticalAlign=top;spacingTop=6;spacingLeft=10;fontColor=#0089D6;fontStyle=1;fontSize=13;dashed=0;" vertex="1" parent="1">
+      <mxGeometry x="195" y="145" width="690" height="490" as="geometry" />
+    </mxCell>
+
+    <!-- ===== RESOURCE GROUP: scstudy-rg ===== -->
+
+    <mxCell id="31" value="Resource Group: scstudy-rg" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#0089D6;dashed=1;strokeWidth=2;align=left;verticalAlign=top;spacingTop=5;spacingLeft=10;fontColor=#0089D6;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="210" y="175" width="660" height="360" as="geometry" />
+    </mxCell>
+
+    <!-- ===== ACR ===== -->
+
+    <mxCell id="40" value="ACR" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;fontStyle=1;verticalAlign=top;spacingTop=5;" vertex="1" parent="1">
+      <mxGeometry x="230" y="210" width="195" height="115" as="geometry" />
+    </mxCell>
+
+    <mxCell id="41" value="scstudyacr5xzbx.azurecr.io" style="text;html=1;align=center;verticalAlign=middle;fontSize=10;strokeColor=none;fillColor=none;fontColor=#333333;" vertex="1" parent="1">
+      <mxGeometry x="230" y="237" width="195" height="18" as="geometry" />
+    </mxCell>
+
+    <mxCell id="42" value="Image: api:latest" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="260" y="263" width="135" height="28" as="geometry" />
+    </mxCell>
+
+    <!-- ===== ACI ===== -->
+
+    <mxCell id="50" value="ACI" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;fontStyle=1;verticalAlign=top;spacingTop=5;" vertex="1" parent="1">
+      <mxGeometry x="470" y="210" width="205" height="115" as="geometry" />
+    </mxCell>
+
+    <mxCell id="51" value="scstudy-api.uksouth.azurecontainer.io" style="text;html=1;align=center;verticalAlign=middle;fontSize=9;strokeColor=none;fillColor=none;fontColor=#333333;" vertex="1" parent="1">
+      <mxGeometry x="470" y="235" width="205" height="18" as="geometry" />
+    </mxCell>
+
+    <mxCell id="52" value="FastAPI + LangGraph&#xa;GPT-4o · port 8000" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="490" y="261" width="165" height="28" as="geometry" />
+    </mxCell>
+
+    <!-- AcrPull label between ACR and ACI -->
+    <mxCell id="53" value="AcrPull (Managed Identity)" style="text;html=1;align=center;verticalAlign=middle;strokeColor=none;fillColor=none;fontSize=9;fontColor=#0089D6;" vertex="1" parent="1">
+      <mxGeometry x="425" y="257" width="45" height="40" as="geometry" />
+    </mxCell>
+
+    <!-- ===== MANAGED IDENTITY ===== -->
+
+    <mxCell id="60" value="Managed Identity&#xa;scstudy-aci-id&#xa;Role: AcrPull" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;verticalAlign=middle;" vertex="1" parent="1">
+      <mxGeometry x="700" y="210" width="150" height="65" as="geometry" />
+    </mxCell>
+
+    <!-- ===== STORAGE ACCOUNT ===== -->
+
+    <mxCell id="70" value="Storage Account: scstudysa5xzbx" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;fontStyle=1;verticalAlign=top;spacingTop=5;" vertex="1" parent="1">
+      <mxGeometry x="230" y="355" width="410" height="155" as="geometry" />
+    </mxCell>
+
+    <mxCell id="71" value="File Share: logs&#xa;Session JSONL · quota 2 GB&#xa;Mounted at /app/backend/logs" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=10;verticalAlign=middle;" vertex="1" parent="1">
+      <mxGeometry x="245" y="390" width="185" height="55" as="geometry" />
+    </mxCell>
+
+    <mxCell id="72" value="File Share: chromadb&#xa;Vector store · quota 5 GB&#xa;CWE Top 25 embeddings" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=10;verticalAlign=middle;" vertex="1" parent="1">
+      <mxGeometry x="440" y="390" width="185" height="55" as="geometry" />
+    </mxCell>
+
+    <!-- ===== BOOTSTRAP STORAGE ===== -->
+
+    <mxCell id="80" value="Resource Group: scstudy-bootstrap (Remote Backend)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#6d8764;dashed=1;strokeWidth=2;align=left;verticalAlign=top;spacingTop=5;spacingLeft=10;fontColor=#6d8764;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="210" y="540" width="380" height="80" as="geometry" />
+    </mxCell>
+
+    <mxCell id="81" value="Storage Account: scstudytfstate · Blob: terraform.tfstate" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="225" y="568" width="350" height="32" as="geometry" />
+    </mxCell>
+
+    <!-- ===== VERCEL ===== -->
+
+    <mxCell id="90" value="Vercel" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#000000;strokeColor=none;fontColor=#ffffff;fontSize=13;fontStyle=1;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+      <mxGeometry x="720" y="355" width="160" height="90" as="geometry" />
+    </mxCell>
+
+    <mxCell id="91" value="Next.js 15 · React 19&#xa;Participant UI&#xa;secure-coding-study.vercel.app" style="text;html=1;align=center;verticalAlign=middle;fontSize=10;strokeColor=none;fillColor=none;fontColor=#ffffff;" vertex="1" parent="1">
+      <mxGeometry x="720" y="380" width="160" height="45" as="geometry" />
+    </mxCell>
+
+    <!-- ===== CONNECTIONS ===== -->
+
+    <!-- Engineer → VS Code -->
+    <mxCell id="100" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#555555;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" source="10" target="11" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- VS Code → Git -->
+    <mxCell id="101" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#555555;" edge="1" source="11" target="12" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- Git → GitHub -->
+    <mxCell id="102" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#555555;" edge="1" source="12" target="13" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- GitHub → GitHub Actions -->
+    <mxCell id="103" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#555555;" edge="1" source="13" target="14" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- GitHub Actions → ACR (az acr build) -->
+    <mxCell id="104" value="az acr build" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#2088FF;fontColor=#2088FF;fontSize=9;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" source="14" target="40" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="600" y="145" />
+          <mxPoint x="327" y="145" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+
+    <!-- GitHub Actions → ACI (terraform apply) -->
+    <mxCell id="105" value="terraform apply" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#623CE4;fontColor=#623CE4;fontSize=9;dashed=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" source="14" target="50" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="600" y="145" />
+          <mxPoint x="572" y="145" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+
+    <!-- Terraform → Bootstrap storage -->
+    <mxCell id="106" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#623CE4;dashed=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" source="15" target="80" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="195" y="217" />
+          <mxPoint x="195" y="580" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+
+    <!-- ACR → ACI (AcrPull) -->
+    <mxCell id="107" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#0089D6;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" source="40" target="50" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- ACI → Storage (mounts logs) -->
+    <mxCell id="108" value="mounts logs share" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#d79b00;fontColor=#d79b00;fontSize=9;dashed=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.75;entryY=0;entryDx=0;entryDy=0;" edge="1" source="50" target="70" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- Managed Identity → ACR (enables pull) -->
+    <mxCell id="109" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#9673a6;dashed=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" source="60" target="50" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- Vercel ↔ ACI (API calls) -->
+    <mxCell id="110" value="NEXT_PUBLIC_API_URL&#xa;:8000" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#000000;fontColor=#000000;fontSize=9;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.3;entryDx=0;entryDy=0;" edge="1" source="90" target="50" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- Vercel → GitHub Actions (deploy on push) -->
+    <mxCell id="111" value="deploys on push" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#000000;fontColor=#000000;fontSize=9;dashed=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" source="90" target="14" parent="1">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="800" y="40" />
+          <mxPoint x="600" y="40" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+
+  </root>
+</mxGraphModel>

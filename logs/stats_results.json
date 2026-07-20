@@ -1,0 +1,112 @@
+{
+  "n_sessions": {
+    "baseline": 4,
+    "multiagent": 3
+  },
+  "descriptives": {
+    "baseline": {
+      "vuln_count": {
+        "n": 4,
+        "mean": 0.0,
+        "median": 0.0,
+        "std": 0.0,
+        "min": 0.0,
+        "max": 0.0
+      },
+      "severity_score": {
+        "n": 4,
+        "mean": 0.0,
+        "median": 0.0,
+        "std": 0.0,
+        "min": 0.0,
+        "max": 0.0
+      },
+      "high_count": {
+        "n": 4,
+        "mean": 0.0,
+        "median": 0.0,
+        "std": 0.0,
+        "min": 0.0,
+        "max": 0.0
+      }
+    },
+    "multiagent": {
+      "vuln_count": {
+        "n": 3,
+        "mean": 0.0,
+        "median": 0.0,
+        "std": 0.0,
+        "min": 0.0,
+        "max": 0.0
+      },
+      "severity_score": {
+        "n": 3,
+        "mean": 0.0,
+        "median": 0.0,
+        "std": 0.0,
+        "min": 0.0,
+        "max": 0.0
+      },
+      "high_count": {
+        "n": 3,
+        "mean": 0.0,
+        "median": 0.0,
+        "std": 0.0,
+        "min": 0.0,
+        "max": 0.0
+      }
+    }
+  },
+  "primary_tests": [
+    {
+      "test": "mann_whitney_vuln_count",
+      "U": 6.0,
+      "p_value": 1.0,
+      "significant": false,
+      "effect_r": 0.0,
+      "effect_magnitude": "negligible",
+      "n_baseline": 4,
+      "n_multiagent": 3
+    },
+    {
+      "test": "mann_whitney_severity_score",
+      "U": 6.0,
+      "p_value": 1.0,
+      "significant": false,
+      "effect_r": 0.0,
+      "effect_magnitude": "negligible",
+      "n_baseline": 4,
+      "n_multiagent": 3
+    },
+    {
+      "test": "mann_whitney_high_count",
+      "U": 6.0,
+      "p_value": 1.0,
+      "significant": false,
+      "effect_r": 0.0,
+      "effect_magnitude": "negligible",
+      "n_baseline": 4,
+      "n_multiagent": 3
+    }
+  ],
+  "confound_checks": [
+    {
+      "test": "kruskal_task_difficulty_baseline",
+      "error": "need at least 2 groups with n>=2"
+    },
+    {
+      "test": "kruskal_task_difficulty_multiagent",
+      "error": "need at least 2 groups with n>=2"
+    }
+  ],
+  "learning_effect": [
+    {
+      "test": "wilcoxon_task_order_baseline",
+      "error": "insufficient paired data (n=0)"
+    },
+    {
+      "test": "wilcoxon_task_order_multiagent",
+      "error": "insufficient paired data (n=0)"
+    }
+  ]
+}

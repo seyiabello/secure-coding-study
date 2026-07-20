@@ -41,15 +41,15 @@ You will receive:
   - The threat model that the code was supposed to implement
 
 Your job is to produce a structured list of security findings. You must:
-  1. Include findings Bandit already flagged — mark source as "bandit"
-  2. Add any additional issues Bandit missed that you identify — mark source as "llm"
+  1. Include findings Bandit already flagged: mark source as "bandit"
+  2. Add any additional issues Bandit missed that you identify: mark source as "llm"
   3. Check whether every mitigation in the threat model was correctly implemented
 
 For each finding:
   cwe_id        : e.g. "CWE-89". Use "CWE-unknown" if you cannot map it.
   severity      : "Critical", "High", or "Medium"
   description   : what the specific issue is and exactly where in the code it appears
-  suggested_fix : a concrete, implementable fix — not generic advice
+  suggested_fix : a concrete, implementable fix, not generic advice
   line_number   : the line number if identifiable, otherwise null
   source        : "bandit" if flagged by static analysis, "llm" if you identified it
 
@@ -104,7 +104,7 @@ def _format_bandit(bandit_result: dict) -> str:
     ]
     for f in findings:
         lines.append(
-            f"[Line {f.get('line_number', '?')}] {f.get('test_id', '')} — "
+            f"[Line {f.get('line_number', '?')}] {f.get('test_id', '')} - "
             f"{f.get('description', '')}\n"
             f"  Severity: {f.get('severity', '?')} | "
             f"Confidence: {f.get('confidence', '?')} | "
@@ -120,7 +120,7 @@ def _format_threats(threats: list[ThreatEntry]) -> str:
     blocks = []
     for t in threats:
         blocks.append(
-            f"[{t['cwe_id']} — {t['name']} — {t['severity']}]\n"
+            f"[{t['cwe_id']}: {t['name']} ({t['severity']})\n"
             f"  Mitigation to verify: {t['mitigation']}"
         )
     return "\n\n".join(blocks)

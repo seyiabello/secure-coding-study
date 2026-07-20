@@ -55,7 +55,7 @@ You will receive:
 
 For each threat, decide:
   passed : true only if the mitigation is fully and correctly implemented
-  notes  : one or two sentences — cite the specific line or pattern you observed
+  notes  : one or two sentences. Cite the specific line or pattern you observed.
 
 overall_pass is true ONLY if ALL threats passed AND execution passed (exit_code 0).
 
@@ -63,7 +63,7 @@ GOOD notes (passed):
 "Parameterised query with ? placeholder on line 8. No string concatenation in SQL."
 
 GOOD notes (failed):
-"hashlib.md5() on line 14. CWE-916 requires bcrypt for password hashing — not used."
+"hashlib.md5() on line 14. CWE-916 requires bcrypt for password hashing. Not used."
 
 BAD notes:
 "The code looks secure." / "Mitigation appears to be implemented."
@@ -97,7 +97,7 @@ def _format_bandit(bandit_result: dict) -> str:
     ]
     for f in findings:
         lines.append(
-            f"[Line {f.get('line_number', '?')}] {f.get('test_id', '')} — "
+            f"[Line {f.get('line_number', '?')}] {f.get('test_id', '')} - "
             f"{f.get('description', '')}\n"
             f"  Severity: {f.get('severity', '?')} | CWE: {f.get('cwe_id') or 'N/A'}"
         )
@@ -110,7 +110,7 @@ def _format_threats(threats: list[ThreatEntry]) -> str:
     blocks = []
     for t in threats:
         blocks.append(
-            f"[{t['cwe_id']} — {t['name']} — {t['severity']}]\n"
+            f"[{t['cwe_id']}: {t['name']} ({t['severity']})\n"
             f"  Required mitigation: {t['mitigation']}"
         )
     return "\n\n".join(blocks)

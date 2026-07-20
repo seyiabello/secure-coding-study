@@ -1,0 +1,141 @@
+name: Azure Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "Terraform action"
+        required: true
+        default: apply
+        type: choice
+        options:
+          - apply
+          - destroy
+
+permissions:
+  id-token: write   # required for OIDC login
+  contents: read
+
+env:
+  ARM_USE_OIDC: "true"
+  ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  TF_VAR_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  TF_VAR_tenant_id: ${{ secrets.AZURE_TENANT_ID }}
+  TF_VAR_openai_api_key: ${{ secrets.OPENAI_API_KEY }}
+  TF_VAR_frontend_origin: ${{ secrets.FRONTEND_ORIGIN }}
+
+jobs:
+  run:
+    name: ${{ github.event.inputs.action == 'apply' && 'Deploy' || 'Destroy' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "~1.9"
+
+      - name: Terraform init
+        working-directory: terraform
+        run: terraform init
+
+      # ── APPLY ──────────────────────────────────────────────────────────────
+      # Stage 1: provision ACR and storage before the image exists
+
+      - name: Provision ACR and supporting infra
+        if: github.event.inputs.action == 'apply'
+        working-directory: terraform
+        run: |
+          terraform apply -auto-approve \
+            -target=random_string.sfx \
+            -target=azurerm_resource_group.rg \
+            -target=azurerm_container_registry.acr \
+            -target=azurerm_storage_account.sa \
+            -target=azurerm_storage_share.logs \
+            -target=azurerm_user_assigned_identity.aci_identity \
+            -target=azurerm_role_assignment.aci_acr_pull \
+            -target=time_sleep.rbac_propagation
+
+      # Stage 2: build the image with ChromaDB baked in, push to ACR
+
+      - uses: actions/setup-python@v5
+        if: github.event.inputs.action == 'apply'
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Ingest ChromaDB corpus
+        if: github.event.inputs.action == 'apply'
+        run: |
+          pip install -r requirements.txt
+          cd backend && python -m rag.ingest
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
+      - name: Build and push Docker image
+        if: github.event.inputs.action == 'apply'
+        run: |
+          ACR_SERVER=$(cd terraform && terraform output -raw acr_login_server)
+          az acr login --name "${ACR_SERVER%%.*}"
+          docker build -t "${ACR_SERVER}/api:latest" .
+          docker push "${ACR_SERVER}/api:latest"
+
+      # Stage 3: full apply — creates ACI now that the image exists
+
+      - name: Deploy ACI
+        if: github.event.inputs.action == 'apply'
+        working-directory: terraform
+        run: terraform apply -auto-approve
+
+      - name: Print API URL
+        if: github.event.inputs.action == 'apply'
+        working-directory: terraform
+        run: |
+          API_URL=$(terraform output -raw api_fqdn)
+          echo "### Deployment complete" >> "$GITHUB_STEP_SUMMARY"
+          echo "**API URL:** ${API_URL}" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Set \`NEXT_PUBLIC_API_URL=${API_URL}\` in your Vercel project environment variables and redeploy." >> "$GITHUB_STEP_SUMMARY"
+
+      # ── DESTROY ────────────────────────────────────────────────────────────
+      # Download session logs first so data survives the destroy
+
+      - name: Download session logs
+        if: github.event.inputs.action == 'destroy'
+        working-directory: terraform
+        run: |
+          SA_NAME=$(terraform output -raw storage_account_name)
+          RG_NAME=$(terraform output -raw resource_group_name)
+          SA_KEY=$(az storage account keys list \
+            --account-name "${SA_NAME}" \
+            --resource-group "${RG_NAME}" \
+            --query "[0].value" -o tsv)
+          mkdir -p ../collected-logs
+          az storage file download-batch \
+            --source logs \
+            --destination ../collected-logs \
+            --account-name "${SA_NAME}" \
+            --account-key "${SA_KEY}"
+        continue-on-error: true
+
+      - name: Upload logs as artifact
+        if: github.event.inputs.action == 'destroy'
+        uses: actions/upload-artifact@v4
+        with:
+          name: session-logs-${{ github.run_id }}
+          path: collected-logs/
+          if-no-files-found: warn
+
+      - name: Terraform destroy
+        if: github.event.inputs.action == 'destroy'
+        working-directory: terraform
+        run: terraform destroy -auto-approve
