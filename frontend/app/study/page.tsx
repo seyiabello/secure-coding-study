@@ -54,6 +54,7 @@ function StudyContent() {
   const pid = searchParams.get("pid");
   const condition = searchParams.get("condition");
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (!pid || !condition) {
       setErrorMsg("This study link is missing required parameters. Please contact ob509@exeter.ac.uk.");
@@ -109,6 +110,7 @@ function StudyContent() {
         setStatus("error");
       });
   }, [pid, condition, router]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   async function handleContinue() {
     if (!pid || !condition) return;

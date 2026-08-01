@@ -12,7 +12,6 @@ const MonacoEditor = dynamic(() => import("@monaco-editor/react"), {
   loading: () => <EditorSkeleton />,
 });
 
-const EASE_OUT: [number, number, number, number] = [0.16, 1, 0.3, 1];
 // Critically-damped spring — matches the no-overshoot settle-in feel extracted from
 // cosmoq.framer.website's load-in animation (see frontend/docs/COSMOQ_INTERACTIONS.md).
 const SPRING_SETTLE = { type: "spring", stiffness: 130, damping: 20, mass: 1 } as const;
