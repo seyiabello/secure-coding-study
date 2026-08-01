@@ -217,7 +217,7 @@ def rerank(task: str, candidates: list[dict], n_final: int = N_FINAL_RESULTS) ->
             f"    {preview}..."
         )
 
-    system_prompt = (
+    system_prompt = (  # nosec B608
         f"You are a security expert. Given a coding task and {len(candidates)} "
         f"candidate CWE chunks, select the {n_final} most relevant chunks.\n\n"
         "Respond with valid JSON only. No other text. Use this schema:\n"

@@ -18,10 +18,10 @@ Environment variables:
 import os
 
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-from routes import baseline, hints, session, tasks
+from routes import baseline, hints, participants, session, tasks
 
 load_dotenv()
 
@@ -51,10 +51,31 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(tasks.router,    prefix="/tasks",    tags=["tasks"])
-app.include_router(baseline.router, prefix="/baseline", tags=["baseline"])
-app.include_router(session.router,  prefix="/session",  tags=["session"])
-app.include_router(hints.router,    prefix="/session",  tags=["hints"])
+def _require_study_open():
+    if os.environ.get("STUDY_OPEN", "true").lower() == "false":
+        raise HTTPException(status_code=503, detail="The study is currently closed.")
+
+
+app.include_router(tasks.router,        prefix="/tasks",        tags=["tasks"])
+app.include_router(participants.router, prefix="/participants",  tags=["participants"])
+app.include_router(
+    baseline.router,
+    prefix="/baseline",
+    tags=["baseline"],
+    dependencies=[Depends(_require_study_open)],
+)
+app.include_router(
+    session.router,
+    prefix="/session",
+    tags=["session"],
+    dependencies=[Depends(_require_study_open)],
+)
+app.include_router(
+    hints.router,
+    prefix="/session",
+    tags=["hints"],
+    dependencies=[Depends(_require_study_open)],
+)
 
 
 @app.get("/health", tags=["meta"])

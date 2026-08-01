@@ -21,6 +21,13 @@ router = APIRouter()
 @router.post("/run", response_model=BaselineRunResponse)
 async def run_baseline(req: BaselineRunRequest):
     from baseline.agent import log_session, run_baseline as _generate
+    from routes.participants import _load_participants
+
+    if req.participant_id not in _load_participants():
+        raise HTTPException(
+            status_code=403,
+            detail="Invalid participant ID. Please check your study link.",
+        )
 
     task = _TASK_MAP.get(req.task_id)
     if task is None:

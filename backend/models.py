@@ -79,3 +79,17 @@ class FinalizeCodeRequest(BaseModel):
 
 class ReviseCodeRequest(BaseModel):
     user_code: str
+
+
+# ── Participant management ─────────────────────────────────────────────────────
+
+class ConsentLogRequest(BaseModel):
+    participant_id: str
+    timestamp: str           # ISO 8601 UTC
+    all_items_confirmed: bool
+
+
+class ParticipantRegisterRequest(BaseModel):
+    participant_id: str
+    condition: str           # "baseline" | "multiagent"
+    secret: str              # must match PARTICIPANT_REGISTER_KEY env var

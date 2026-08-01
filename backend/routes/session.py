@@ -31,6 +31,13 @@ router = APIRouter()
 async def start_session(req: StartSessionRequest):
     from multiagent.graph import get_current_state
     from multiagent.graph import start_session as _start
+    from routes.participants import _load_participants
+
+    if req.participant_id not in _load_participants():
+        raise HTTPException(
+            status_code=403,
+            detail="Invalid participant ID. Please check your study link.",
+        )
 
     task = _TASK_MAP.get(req.task_id)
     if task is None:

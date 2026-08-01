@@ -3,7 +3,7 @@ langfuse
 langgraph
 langchain-openai
 langchain-mcp-adapters==0.3.0
-mcp[cli]==1.28.0
+mcp[cli]==1.28.1
 python-dotenv
 scipy
 chromadb

@@ -8,6 +8,8 @@ __pycache__/
 chroma_db/
 tests/venv/
 terraform/terraform.tfvars
+scripts/participant_links.csv
+logs/consent_log.jsonl
 terraform/.terraform/
 terraform/*.tfstate
 terraform/*.tfstate.backup

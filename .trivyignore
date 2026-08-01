@@ -1,0 +1,9 @@
+# Suppress vulnerabilities in setuptools-vendored internal packages.
+# These are bundled inside setuptools' own _vendor/ directory and are only
+# used during package installation, not at application runtime.
+
+# jaraco.context 5.3.0 inside setuptools/_vendor/
+CVE-2026-23949
+
+# wheel 0.45.1 inside setuptools/_vendor/
+CVE-2026-24049

@@ -200,3 +200,31 @@ export async function reviseCode(
 ): Promise<{ state: AgentStateData }> {
   return apiPost(`/session/${threadId}/revise`, { user_code: userCode });
 }
+
+/* ── Participant management ──────────────────────────────────────────────── */
+
+export async function validateParticipant(pid: string): Promise<{
+  valid: boolean;
+  condition?: string;
+  status?: "new" | "in_progress";
+  tasks_completed?: number;
+  reason?: "not_found" | "complete";
+}> {
+  return apiGet(`/participants/validate/${encodeURIComponent(pid)}`);
+}
+
+export async function resumeParticipantSession(pid: string): Promise<{
+  condition: string;
+  tasks_completed: number;
+  completed_task_ids: string[];
+}> {
+  return apiGet(`/participants/resume/${encodeURIComponent(pid)}`);
+}
+
+export async function postConsent(params: {
+  participant_id: string;
+  timestamp: string;
+  all_items_confirmed: boolean;
+}): Promise<{ ok: boolean }> {
+  return apiPost("/participants/consent", params);
+}

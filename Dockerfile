@@ -27,6 +27,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the backend source.
 # This includes backend/chroma_db/ if you ran rag.ingest locally first.
 COPY backend/ ./backend/
+COPY data/ ./data/
 
 # Work from the backend directory so relative paths (chroma_db/, rag/)
 # resolve correctly — this matches the documented run commands.

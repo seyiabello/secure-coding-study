@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { AnimatePresence, motion, type Variants } from "motion/react";
+import DebriefPage from "@/components/DebriefPage";
 import {
   fetchShuffledTasks,
   startSession,
@@ -148,9 +149,17 @@ export default function MultiAgentPage() {
 
   /* — init — */
   useEffect(() => {
-    const pid = localStorage.getItem("participant_id");
+    const pid = sessionStorage.getItem("participant_id");
     if (!pid) { router.replace("/"); return; }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setParticipantId(pid);
+
+    const startIdx = parseInt(sessionStorage.getItem("task_start_index") ?? "0", 10);
+    if (!isNaN(startIdx) && startIdx > 0) {
+      setTaskIndex(startIdx);
+      sessionStorage.removeItem("task_start_index");
+    }
+
     fetchShuffledTasks()
       .then((t) => { setTasks(t); setUiStage("starting"); })
       .catch((e) => setApiError(`Could not load tasks: ${e.message}`));
@@ -279,25 +288,7 @@ export default function MultiAgentPage() {
   /* ── Render ──────────────────────────────────────────────────────────────── */
 
   if (uiStage === "all_complete") {
-    return (
-      <div className="oled-scope relative flex min-h-screen items-center justify-center px-6 py-12">
-        <div className="oled-ambient" />
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, ease: EASE_OUT }}
-          className="relative z-10 max-w-[420px] text-center"
-        >
-          <div className="check-pop mx-auto mb-6 flex h-[52px] w-[52px] items-center justify-center rounded-full border border-success bg-success-surface">
-            <svg width="22" height="22" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-              <path d="M4 10l4.5 4.5L16 6" stroke="#86efac" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </div>
-          <h1 className="mb-2.5 text-xl font-medium tracking-[-0.4px] text-ink">All {tasks.length} tasks complete</h1>
-          <p className="text-[15px] text-ink-muted">Thank you for participating. You may now close this browser tab.</p>
-        </motion.div>
-      </div>
-    );
+    return <DebriefPage participantId={participantId ?? ""} ambientClass="oled-ambient" />;
   }
 
   const currentTask = tasks[taskIndex];
