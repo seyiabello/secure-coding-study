@@ -53,11 +53,24 @@ jobs:
           SERVER=$(az acr list --resource-group scstudy-rg --query "[0].loginServer" -o tsv)
           echo "server=$SERVER" >> $GITHUB_OUTPUT
 
-      - name: Build and push Docker image
+      - name: Build Docker image
         run: |
           IMAGE="${{ steps.acr.outputs.server }}/api"
-          az acr login --name "${IMAGE%%.*}"
           docker build -t "${IMAGE}:${{ github.sha }}" -t "${IMAGE}:latest" .
+          echo "IMAGE=${IMAGE}" >> $GITHUB_ENV
+
+      - name: Trivy image scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.IMAGE }}:${{ github.sha }}
+          format: table
+          exit-code: 1
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+
+      - name: Push Docker image
+        run: |
+          az acr login --name "${IMAGE%%.*}"
           docker push "${IMAGE}:${{ github.sha }}"
           docker push "${IMAGE}:latest"
 
@@ -80,6 +93,22 @@ jobs:
           TF_VAR_frontend_origin: ${{ secrets.FRONTEND_ORIGIN }}
           TF_VAR_langfuse_public_key: ${{ secrets.LANGFUSE_PUBLIC_KEY }}
           TF_VAR_langfuse_secret_key: ${{ secrets.LANGFUSE_SECRET_KEY }}
+
+      - name: Smoke test
+        run: |
+          URL=$(cd terraform && terraform output -raw api_fqdn)
+          echo "Waiting for ACI to start..."
+          for i in $(seq 1 18); do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${URL}/health" || echo "000")
+            if [ "$STATUS" = "200" ]; then
+              echo "Health check passed (attempt $i)"
+              exit 0
+            fi
+            echo "Attempt $i/18: HTTP $STATUS - retrying in 10s"
+            sleep 10
+          done
+          echo "Smoke test failed: /health did not return 200 within 3 minutes"
+          exit 1
 
       - name: Print deployment URL
         working-directory: terraform
