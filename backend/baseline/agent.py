@@ -15,6 +15,8 @@ import json
 import datetime
 from openai import OpenAI
 
+from langfuse import observe, propagate_attributes
+
 from config import client, MODEL, TEMPERATURE
 from baseline.prompts import SYSTEM_PROMPT
 
@@ -22,22 +24,35 @@ LOG_FILE = "logs/baseline_sessions.jsonl"
 
 # ── Core agent function ───────────────────────────────────────────────────────
 
-def run_baseline(task: str, client: OpenAI = client) -> str:
+@observe(name="baseline")
+def run_baseline(
+    task: str,
+    client: OpenAI = client,
+    participant_id: str = "unknown",
+    task_id: str = "unknown",
+) -> str:
     """
     Submit a task to GPT-4o and return the response.
 
     One system message, one user message, one response.
     No intermediate steps, no review, no iteration.
     """
-    response = client.chat.completions.create(
-        model=MODEL,
-        temperature=TEMPERATURE,
-        max_tokens=2048,
-        messages=[
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": task},
-        ],
-    )
+    session_id = f"{participant_id}_{task_id}"
+    with propagate_attributes(
+        session_id=session_id,
+        user_id=participant_id,
+        tags=["baseline"],
+    ):
+        response = client.chat.completions.create(
+            model=MODEL,
+            temperature=TEMPERATURE,
+            max_tokens=2048,
+            messages=[
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": task},
+            ],
+            name="baseline",
+        )
     return response.choices[0].message.content
 
 # ── Logging ───────────────────────────────────────────────────────────────────

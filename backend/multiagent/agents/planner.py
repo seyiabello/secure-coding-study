@@ -21,6 +21,8 @@ never does.
 import asyncio
 import json
 
+from langfuse import observe, propagate_attributes
+
 from config import MODEL, TEMPERATURE, client
 from multiagent.state import AgentState, PlannerOutput
 
@@ -67,6 +69,7 @@ Respond with valid JSON only. No other text. Use this exact schema:
 
 # ── Agent function ─────────────────────────────────────────────────────────────
 
+@observe(name="planner")
 async def run_planner(state: AgentState) -> dict:
     """
     Planner agent node for the LangGraph graph.
@@ -87,23 +90,27 @@ async def run_planner(state: AgentState) -> dict:
           current_stage  : "threat_modelling" on success, "error" on failure
           error          : None on success, error message string on failure
     """
-    task = state["task"]
+    task       = state["task"]
+    session_id = f"{state['participant_id']}_{state.get('task_id', 'unknown')}"
 
     print(f"[Planner] Planning task: {task[:80]}...")
 
     try:
-        # Direct OpenAI SDK call — no LangChain.
-        # response_format=json_object guarantees the response is valid JSON
-        # so json.loads never raises a decode error on well-formed responses.
-        response = client.chat.completions.create(
-            model=MODEL,
-            temperature=TEMPERATURE,
-            response_format={"type": "json_object"},
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user",   "content": f"Coding task: {task}"},
-            ],
-        )
+        with propagate_attributes(
+            session_id=session_id,
+            user_id=state["participant_id"],
+            tags=["multiagent", "planner"],
+        ):
+            response = client.chat.completions.create(
+                model=MODEL,
+                temperature=TEMPERATURE,
+                response_format={"type": "json_object"},
+                messages=[
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user",   "content": f"Coding task: {task}"},
+                ],
+                name="planner",
+            )
 
         raw = json.loads(response.choices[0].message.content)
 

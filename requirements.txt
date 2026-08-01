@@ -1,4 +1,5 @@
 openai
+langfuse
 langgraph
 langchain-openai
 langchain-mcp-adapters

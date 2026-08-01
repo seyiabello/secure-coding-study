@@ -24,6 +24,8 @@ import asyncio
 import json
 import sys
 
+from langfuse import observe, propagate_attributes
+
 from config import MODEL, TEMPERATURE, client
 from mcp_client import call_tool, get_client
 from multiagent.state import (
@@ -134,6 +136,7 @@ def _format_execution(sandbox_result: dict) -> str:
 
 # ── Agent function ─────────────────────────────────────────────────────────────
 
+@observe(name="verifier")
 async def run_verifier(state: AgentState) -> dict:
     generated_code = state.get("generated_code") or ""
     threats        = state.get("threats") or []
@@ -179,15 +182,27 @@ async def run_verifier(state: AgentState) -> dict:
             f"SANDBOX EXECUTION:\n{_format_execution(sandbox_result)}"
         )
 
-        response = client.chat.completions.create(
-            model=MODEL,
-            temperature=TEMPERATURE,
-            response_format={"type": "json_object"},
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user",   "content": user_message},
-            ],
-        )
+        session_id = f"{state['participant_id']}_{state.get('task_id', 'unknown')}"
+        with propagate_attributes(
+            session_id=session_id,
+            user_id=state["participant_id"],
+            tags=["multiagent", "verifier"],
+            metadata={
+                "bandit_findings_count": len(bandit_findings_raw),
+                "sandbox_passed":        execution_result["passed"],
+                "sandbox_exit_code":     execution_result["exit_code"],
+            },
+        ):
+            response = client.chat.completions.create(
+                model=MODEL,
+                temperature=TEMPERATURE,
+                response_format={"type": "json_object"},
+                messages=[
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user",   "content": user_message},
+                ],
+                name="verifier",
+            )
 
         raw = json.loads(response.choices[0].message.content)
 

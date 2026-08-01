@@ -21,6 +21,8 @@ not generic advice.
 import asyncio
 import json
 
+from langfuse import observe, propagate_attributes
+
 from config import MODEL, TEMPERATURE, client
 from mcp_client import call_tool, get_client
 from multiagent.state import AgentState, ThreatEntry
@@ -111,6 +113,7 @@ def _format_nvd_cves(nvd_result: dict) -> str:
 
 # ── Agent function ─────────────────────────────────────────────────────────────
 
+@observe(name="threat_modeller")
 async def run_threat_modeller(state: AgentState) -> dict:
     """
     Threat Modeller agent node for the LangGraph graph.
@@ -195,15 +198,26 @@ async def run_threat_modeller(state: AgentState) -> dict:
         # ── Step 4: Generate threat model ──────────────────────────────────────
         # GPT-4o reads all the context and produces structured ThreatEntry dicts.
         print("[Threat Modeller] Generating threat model with GPT-4o...")
-        response = client.chat.completions.create(
-            model=MODEL,
-            temperature=TEMPERATURE,
-            response_format={"type": "json_object"},
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user",   "content": user_message},
-            ],
-        )
+        session_id = f"{state['participant_id']}_{state.get('task_id', 'unknown')}"
+        with propagate_attributes(
+            session_id=session_id,
+            user_id=state["participant_id"],
+            tags=["multiagent", "threat_modeller"],
+            metadata={
+                "rag_chunks_retrieved": len(rag_results),
+                "nvd_cves_retrieved":   len(nvd_result.get("cves", [])),
+            },
+        ):
+            response = client.chat.completions.create(
+                model=MODEL,
+                temperature=TEMPERATURE,
+                response_format={"type": "json_object"},
+                messages=[
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user",   "content": user_message},
+                ],
+                name="threat_modeller",
+            )
 
         raw = json.loads(response.choices[0].message.content)
         raw_threats = raw.get("threats", [])

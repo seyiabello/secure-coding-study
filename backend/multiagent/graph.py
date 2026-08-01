@@ -45,6 +45,8 @@ from multiagent.agents.planner import run_planner
 from multiagent.agents.threat_modeller import run_threat_modeller
 from multiagent.agents.verifier import run_verifier
 from multiagent.state import AgentState, create_initial_state, to_log_entry
+from evaluation.langfuse_eval import run_all_evals
+from config import langfuse as _langfuse
 
 LOG_PATH = Path("logs/multiagent_sessions.jsonl")
 
@@ -52,20 +54,40 @@ LOG_PATH = Path("logs/multiagent_sessions.jsonl")
 # -- Finalise node --------------------------------------------------------------
 
 async def _finalise(state: AgentState) -> dict:
-    """Compute session duration, build JSONL log record, write to disk."""
+    """Compute session duration, run evals, build JSONL log record, write to disk."""
     session_end = datetime.datetime.now(datetime.timezone.utc).isoformat()
 
     start    = datetime.datetime.fromisoformat(state["session_start"])
     end      = datetime.datetime.fromisoformat(session_end)
     duration = (end - start).total_seconds()
 
+    # Run LLM-as-judge evaluations before writing the log so scores are included.
+    try:
+        eval_results = run_all_evals(state)
+    except Exception as exc:
+        print(f"[Graph] Eval failed (non-fatal): {exc}")
+        eval_results = {"error": str(exc)}
+
     log_entry = to_log_entry(state)
     log_entry["session_end"]      = session_end
     log_entry["duration_seconds"] = round(duration, 3)
 
+    # Attach eval scores under multi_agent_detail so they travel with the session.
+    if "multi_agent_detail" not in log_entry:
+        log_entry["multi_agent_detail"] = {}
+    log_entry["multi_agent_detail"]["eval"] = eval_results
+
     LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
     with LOG_PATH.open("a", encoding="utf-8") as f:
         f.write(json.dumps(log_entry) + "\n")
+
+    # Flush Langfuse buffer so all traces/scores are sent before the response
+    # is returned to the frontend. Important in short-lived request contexts.
+    if _langfuse:
+        try:
+            _langfuse.flush()
+        except Exception:
+            pass
 
     print(f"[Graph] Session complete. Duration: {duration:.1f}s -- logged to {LOG_PATH}")
 
