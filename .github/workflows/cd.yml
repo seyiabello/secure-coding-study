@@ -94,6 +94,8 @@ jobs:
           TF_VAR_frontend_origin: ${{ secrets.FRONTEND_ORIGIN }}
           TF_VAR_langfuse_public_key: ${{ secrets.LANGFUSE_PUBLIC_KEY }}
           TF_VAR_langfuse_secret_key: ${{ secrets.LANGFUSE_SECRET_KEY }}
+          TF_VAR_participant_register_key: ${{ secrets.PARTICIPANT_REGISTER_KEY }}
+          TF_VAR_monitoring_api_key: ${{ secrets.MONITORING_API_KEY }}
 
       - name: Smoke test
         run: |

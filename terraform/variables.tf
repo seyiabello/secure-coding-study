@@ -68,3 +68,16 @@ variable "langfuse_secret_key" {
   sensitive   = true
   default     = ""
 }
+
+variable "participant_register_key" {
+  description = "Secret key Apps Script uses to register participants via POST /participants/register"
+  type        = string
+  sensitive   = true
+}
+
+variable "monitoring_api_key" {
+  description = "API key for GET /participants/status monitoring endpoint (optional)"
+  type        = string
+  sensitive   = true
+  default     = ""
+}

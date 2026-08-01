@@ -30,9 +30,11 @@ resource "azurerm_container_group" "api" {
     }
 
     secure_environment_variables = {
-      OPENAI_API_KEY      = var.openai_api_key
-      LANGFUSE_PUBLIC_KEY = var.langfuse_public_key
-      LANGFUSE_SECRET_KEY = var.langfuse_secret_key
+      OPENAI_API_KEY           = var.openai_api_key
+      LANGFUSE_PUBLIC_KEY      = var.langfuse_public_key
+      LANGFUSE_SECRET_KEY      = var.langfuse_secret_key
+      PARTICIPANT_REGISTER_KEY = var.participant_register_key
+      MONITORING_API_KEY       = var.monitoring_api_key
     }
 
     ports {
