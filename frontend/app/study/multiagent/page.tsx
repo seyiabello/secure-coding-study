@@ -873,6 +873,7 @@ function CodingStage({
 
   // Hint log — passed to onFinalize
   const [hintsLog, setHintsLog] = useState<HintRecord[]>([]);
+  const [hintError, setHintError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchStepCaps(threadId)
@@ -897,6 +898,7 @@ function CodingStage({
 
   async function handleStepHint(stepIndex: number, level: HintLevel) {
     if (stepHintLoading) return;
+    setHintError(null);
     setStepHintLoading({ step: stepIndex, level });
     setNextHint(null);
     try {
@@ -905,12 +907,13 @@ function CodingStage({
       setStepUnlocked((prev) => ({ ...prev, [stepIndex]: Math.max(prev[stepIndex] ?? 0, LEVEL_DEPTH[level]) }));
       const record: HintRecord = { step_index: stepIndex, level, timestamp: new Date().toISOString() };
       setHintsLog((prev) => [...prev, record]);
-    } catch { /* silently ignore */ }
+    } catch (e) { setHintError(e instanceof Error ? e.message : "Hint request failed"); }
     finally { setStepHintLoading(null); }
   }
 
   async function handleNextHint() {
     if (nextHintLoading || code.length < 20) return;
+    setHintError(null);
     setNextHintLoading(true);
     setActiveStepHint(null);
     try {
@@ -918,19 +921,20 @@ function CodingStage({
       setNextHint({ text: res.content, securityNote: res.security_note });
       const record: HintRecord = { step_index: -1, level: "adaptive", timestamp: new Date().toISOString() };
       setHintsLog((prev) => [...prev, record]);
-    } catch { /* silently ignore */ }
+    } catch (e) { setHintError(e instanceof Error ? e.message : "Hint request failed"); }
     finally { setNextHintLoading(false); }
   }
 
   async function handleSecurityHint() {
     if (securityHintLoading || code.length < 30) return;
+    setHintError(null);
     setSecurityHintLoading(true);
     try {
       const res = await requestSecurityHint(threadId, code);
       setSecurityHint(res.hint);
       const record: HintRecord = { step_index: -1, level: "security", timestamp: new Date().toISOString() };
       setHintsLog((prev) => [...prev, record]);
-    } catch { /* silently ignore */ }
+    } catch (e) { setHintError(e instanceof Error ? e.message : "Hint request failed"); }
     finally { setSecurityHintLoading(false); }
   }
 
@@ -979,6 +983,14 @@ function CodingStage({
             <SparkleIcon className="h-3.5 w-3.5 text-ai-bright" />
             <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted">Hints</p>
           </div>
+
+          {hintError && (
+            <div className="flex items-start gap-2.5 rounded-lg border border-danger-border/60 bg-danger-surface/70 px-4 py-3">
+              <span className="flex-shrink-0 text-xs font-bold text-danger-ink">✕</span>
+              <p className="flex-1 text-xs text-danger-ink">{hintError}</p>
+              <button onClick={() => setHintError(null)} className="text-xs text-ink-faint hover:text-ink-secondary">dismiss</button>
+            </div>
+          )}
 
           {/* Adaptive: "What should I do next?" — floating AI query card */}
           <div className="elevate-glass accent-wash-green rounded-xl p-4">
