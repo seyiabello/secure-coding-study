@@ -24,3 +24,11 @@ resource "azurerm_storage_share" "logs" {
   storage_account_id = azurerm_storage_account.sa.id
   quota              = 2
 }
+
+# Participant registry — participants.json grows as Apps Script registers participants;
+# must survive container restarts and Terraform redeploys
+resource "azurerm_storage_share" "data" {
+  name               = "data"
+  storage_account_id = azurerm_storage_account.sa.id
+  quota              = 1
+}

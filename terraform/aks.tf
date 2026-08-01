@@ -53,6 +53,15 @@ resource "azurerm_container_group" "api" {
       storage_account_name = azurerm_storage_account.sa.name
       storage_account_key  = azurerm_storage_account.sa.primary_access_key
     }
+
+    # Participant registry (data/participants.json) must survive container restarts.
+    volume {
+      name                 = "data"
+      mount_path           = "/app/data"
+      share_name           = azurerm_storage_share.data.name
+      storage_account_name = azurerm_storage_account.sa.name
+      storage_account_key  = azurerm_storage_account.sa.primary_access_key
+    }
   }
 
   depends_on = [time_sleep.rbac_propagation]
