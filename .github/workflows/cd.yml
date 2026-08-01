@@ -45,18 +45,13 @@ jobs:
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
-      - uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: "~1.9"
-
-      - name: Terraform init
-        working-directory: terraform
-        run: terraform init
-
+      # Use Azure CLI to find the ACR — avoids depending on Terraform state.
+      # The resource group name is deterministic (scstudy-rg).
       - name: Get ACR login server
         id: acr
-        working-directory: terraform
-        run: echo "server=$(terraform output -raw acr_login_server)" >> $GITHUB_OUTPUT
+        run: |
+          SERVER=$(az acr list --resource-group scstudy-rg --query "[0].loginServer" -o tsv)
+          echo "server=$SERVER" >> $GITHUB_OUTPUT
 
       - name: Build and push Docker image
         run: |
@@ -66,8 +61,15 @@ jobs:
           docker push "${IMAGE}:${{ github.sha }}"
           docker push "${IMAGE}:latest"
 
-      # Passes the commit SHA as image_tag so the ACI container group is
-      # recreated with the new image on every deploy.
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "~1.9"
+
+      - name: Terraform init
+        working-directory: terraform
+        run: terraform init
+
+      # Passes the commit SHA as image_tag so ACI is recreated with the new image.
       - name: Deploy to ACI
         working-directory: terraform
         run: terraform apply -auto-approve -var="image_tag=${{ github.sha }}"

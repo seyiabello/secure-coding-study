@@ -4,7 +4,6 @@ langgraph
 langchain-openai
 langchain-mcp-adapters
 mcp[cli]
-streamlit
 python-dotenv
 scipy
 chromadb
@@ -12,3 +11,5 @@ bandit
 httpx
 fastapi
 uvicorn[standard]
+pytest
+pytest-asyncio
