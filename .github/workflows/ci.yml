@@ -3,7 +3,7 @@ name: CI
 on:
   push:
   pull_request:
-    branches: [main]
+    branches: [master]
 
 jobs:
   test:
@@ -24,7 +24,6 @@ jobs:
         run: python -m pytest tests/ -v --ignore=tests/test_agents.py
         env:
           PYTHONPATH: backend
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
   typecheck:
     name: Frontend typecheck
