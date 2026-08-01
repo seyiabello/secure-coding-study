@@ -1,7 +1,7 @@
-"""
+﻿"""
 baseline/agent.py
 -----------------
-Single-agent baseline — control condition for the secure coding study.
+Single-agent baseline: control condition for the secure coding study.
 
 The participant submits a coding task. GPT-4o returns code directly.
 No orchestration, no specialised roles, no security-aware prompting.
@@ -13,6 +13,7 @@ comparison against the multi-agent system.
 import os
 import json
 import datetime
+from pathlib import Path
 from openai import OpenAI
 
 from langfuse import observe, propagate_attributes
@@ -20,7 +21,7 @@ from langfuse import observe, propagate_attributes
 from config import client, MODEL, TEMPERATURE
 from baseline.prompts import SYSTEM_PROMPT
 
-LOG_FILE = "logs/baseline_sessions.jsonl"
+LOG_FILE = str(Path(__file__).parent.parent / "logs" / "baseline_sessions.jsonl")
 
 # ── Core agent function ───────────────────────────────────────────────────────
 
@@ -88,7 +89,7 @@ def log_session(
 
 def main() -> None:
     print("=" * 60)
-    print("Baseline agent — control condition")
+    print("Baseline agent: control condition")
     print(f"Model: {MODEL}  |  Temperature: {TEMPERATURE}")
     print("Type 'quit' to exit.")
     print("=" * 60)

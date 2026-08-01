@@ -1,7 +1,7 @@
-"""
+﻿"""
 multiagent/agents/planner.py
 ----------------------------
-Planner agent — first stage of the multi-agent pipeline.
+Planner agent: first stage of the multi-agent pipeline.
 
 Takes the participant's coding task and produces a structured implementation plan.
 
@@ -14,7 +14,7 @@ No RAG, no MCP. Direct GPT-4o call with JSON output.
 
 This is the only agent in the pipeline that runs before the threat model.
 Its security_requirements field is what forces the multi-agent system to think
-about security explicitly before any code is written — something the baseline
+about security explicitly before any code is written: something the baseline
 never does.
 """
 

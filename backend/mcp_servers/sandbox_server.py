@@ -1,4 +1,4 @@
-"""
+﻿"""
 mcp_servers/sandbox_server.py
 ------------------------------
 MCP server that executes Python code in a restricted subprocess and
@@ -13,7 +13,7 @@ without errors, independently of the static analysis done by Bandit.
 Restrictions applied:
   - 10 second execution timeout (process is forcibly killed on expiry)
   - Code runs in an isolated temp directory, not the project folder
-  - stdin explicitly closed (subprocess.DEVNULL) — code cannot read input
+  - stdin explicitly closed (subprocess.DEVNULL) - code cannot read input
   - stdout and stderr capped at 4 KB each
   - Syntax checked with ast.parse before subprocess is spawned
 
@@ -57,7 +57,7 @@ async def _execute_code(code: str) -> dict:
     Executes Python code in a restricted subprocess and returns the result.
 
     Steps:
-      1. Check syntax with ast.parse — catches errors before spawning anything
+      1. Check syntax with ast.parse: catches errors before spawning anything
       2. Write the code to a temp file in an isolated temp directory
       3. Run the file as an async subprocess with stdin closed
       4. Wait for completion with asyncio.wait_for (kills on timeout)
@@ -231,7 +231,7 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
     """
     Handles a tool call from an agent.
 
-    Calls _execute_code (async) directly — no thread pool needed because
+    Calls _execute_code (async) directly: no thread pool needed because
     the subprocess is managed by the event loop via asyncio.create_subprocess_exec.
     """
     if name != TOOL_NAME:

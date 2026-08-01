@@ -54,3 +54,17 @@ variable "tenant_id" {
   description = "Azure Tenant ID used by Terraform"
   type        = string
 }
+
+variable "langfuse_public_key" {
+  description = "Langfuse public key for agent tracing (optional)"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "langfuse_secret_key" {
+  description = "Langfuse secret key for agent tracing (optional)"
+  type        = string
+  sensitive   = true
+  default     = ""
+}

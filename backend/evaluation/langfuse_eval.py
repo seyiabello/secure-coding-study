@@ -1,13 +1,13 @@
-"""
+﻿"""
 evaluation/langfuse_eval.py
 ---------------------------
 LLM-as-judge evaluation functions for the secure coding study.
 
 Three evaluators run automatically at the end of every multi-agent session:
 
-  1. rag_quality         — did the Threat Modeller retrieve the right CWEs?
-  2. review_groundedness — are Code Reviewer findings grounded in the actual code?
-  3. bandit_agreement    — do Code Reviewer and Verifier agree on Bandit results?
+  1. rag_quality: did the Threat Modeller retrieve the right CWEs?
+  2. review_groundedness: are Code Reviewer findings grounded in the actual code?
+  3. bandit_agreement: do Code Reviewer and Verifier agree on Bandit results?
 
 run_all_evals() is decorated with @observe so all three judge calls appear as
 a single "eval_session" trace in Langfuse, grouped under the same session_id
@@ -100,7 +100,7 @@ def score_rag_quality(task: str, rag_results: list, threats: list) -> dict:
             name="judge/rag_quality",
         )
         result = json.loads(response.choices[0].message.content)
-        print(f"[Eval] RAG quality: {result.get('score')}/10 — {result.get('reasoning', '')}")
+        print(f"[Eval] RAG quality: {result.get('score')}/10: {result.get('reasoning', '')}")
         return result
     except Exception as exc:
         print(f"[Eval] RAG quality judge failed: {exc}")
@@ -111,8 +111,8 @@ def score_rag_quality(task: str, rag_results: list, threats: list) -> dict:
 
 _GROUNDEDNESS_PROMPT = """\
 You are a security code review evaluator. Determine whether each finding from \
-a code review is grounded in the actual code — i.e., refers to a pattern or \
-line that genuinely exists — or is hallucinated.
+a code review is grounded in the actual code: i.e., refers to a pattern or \
+line that genuinely exists: or is hallucinated.
 
 Code:
 ```python
@@ -197,9 +197,9 @@ def compute_bandit_agreement(bandit_review: list, bandit_verify: list) -> dict:
     """
     Compute Jaccard overlap between Code Reviewer and Verifier Bandit runs.
 
-    Both agents run Bandit on the same code — they should agree on CWE findings.
+    Both agents run Bandit on the same code: they should agree on CWE findings.
     Disagreement flags a state bug, non-deterministic Bandit output, or MCP error.
-    No LLM call needed — this is a deterministic computation.
+    No LLM call needed: this is a deterministic computation.
     """
     review_cwes = {f.get("cwe_id") for f in (bandit_review or []) if f.get("cwe_id")}
     verify_cwes  = {f.get("cwe_id") for f in (bandit_verify  or []) if f.get("cwe_id")}

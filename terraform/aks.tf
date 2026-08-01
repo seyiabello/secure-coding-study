@@ -26,10 +26,13 @@ resource "azurerm_container_group" "api" {
 
     environment_variables = {
       FRONTEND_ORIGIN = var.frontend_origin
+      LANGFUSE_HOST   = "https://cloud.langfuse.com"
     }
 
     secure_environment_variables = {
-      OPENAI_API_KEY = var.openai_api_key
+      OPENAI_API_KEY      = var.openai_api_key
+      LANGFUSE_PUBLIC_KEY = var.langfuse_public_key
+      LANGFUSE_SECRET_KEY = var.langfuse_secret_key
     }
 
     ports {

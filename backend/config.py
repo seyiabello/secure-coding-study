@@ -1,13 +1,13 @@
-"""
+﻿"""
 config.py
 ---------
 Shared configuration for all agents (baseline and multi-agent).
 
 Exports:
-  client   — OpenAI client (langfuse.openai drop-in when keys are present)
-  MODEL    — model name string
-  TEMPERATURE — shared temperature (0.2)
-  langfuse — Langfuse singleton for scoring/flushing (None if not configured)
+  client: OpenAI client (langfuse.openai drop-in when keys are present)
+  MODEL: model name string
+  TEMPERATURE: shared temperature (0.2)
+  langfuse: Langfuse singleton for scoring/flushing (None if not configured)
 
 Import these rather than instantiating OpenAI or Langfuse inside agent files.
 """
@@ -45,7 +45,7 @@ else:
 
 client = OpenAI(api_key=_api_key)
 
-# Langfuse singleton — used for scoring and explicit flush at session end.
+# Langfuse singleton: used for scoring and explicit flush at session end.
 # get_client() returns the module-level singleton; safe to call multiple times.
 langfuse = None
 if _langfuse_configured:

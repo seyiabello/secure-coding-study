@@ -1,11 +1,11 @@
-"""
+﻿"""
 rag/ingest.py
 -------------
 Loads the CWE Top 25 corpus, splits each entry into focused chunks,
 embeds them using OpenAI text-embedding-3-small, and stores everything
 in a local ChromaDB vector database.
 
-Run once before using the RAG retriever. Re-running is safe — it skips
+Run once before using the RAG retriever. Re-running is safe: it skips
 if the collection already exists. Pass force=True to recreate from scratch.
 """
 
@@ -35,7 +35,7 @@ def get_embedding_function() -> OpenAIEmbeddingFunction:
 
     We use text-embedding-3-small because it is fast, cheap, and accurate
     enough for a 25-entry corpus. The same model must be used at ingest
-    time and at retrieval time — mixing models breaks similarity search.
+    time and at retrieval time: mixing models breaks similarity search.
     """
     api_key = os.environ.get("OPENAI_API_KEY")
     if not api_key:
@@ -54,7 +54,7 @@ def chunk_entry(entry: dict) -> list[dict]:
     Why three chunks instead of one?
     If we stored the entire entry as one chunk, a query about mitigations
     would retrieve the chunk but most of its content would be about the
-    description and examples — not what the agent needs. Three focused
+    description and examples: not what the agent needs. Three focused
     chunks give the retriever more precise targets.
 
     Returns a list of dicts, each with:
@@ -105,7 +105,7 @@ def chunk_entry(entry: dict) -> list[dict]:
     # The Code Generator and Verifier use mitigations to understand what
     # secure code should look like for a given CWE.
     mitigations_text = (
-        f"{cwe_id}: {short_name} — Mitigations and Prevention\n\n"
+        f"{cwe_id}: {short_name} - Mitigations and Prevention\n\n"
         + "\n".join(f"- {m}" for m in entry["mitigations"])
     )
     chunks.append({
@@ -119,7 +119,7 @@ def chunk_entry(entry: dict) -> list[dict]:
     # The Verifier uses examples to recognise vulnerable patterns in the
     # generated code when checking against the threat model.
     examples_text = (
-        f"{cwe_id}: {short_name} — Vulnerable Code Scenarios\n\n"
+        f"{cwe_id}: {short_name} - Vulnerable Code Scenarios\n\n"
         + "\n".join(f"- {e}" for e in entry["examples"])
     )
     chunks.append({
@@ -150,7 +150,7 @@ def ingest(force: bool = False) -> int:
     """
 
     # Step 1: Load the CWE corpus from disk.
-    # The corpus is the source of truth — all 25 entries with their full
+    # The corpus is the source of truth: all 25 entries with their full
     # descriptions, mitigations, and examples.
     if not CORPUS_PATH.exists():
         raise FileNotFoundError(
@@ -165,7 +165,7 @@ def ingest(force: bool = False) -> int:
 
     # Step 2: Connect to ChromaDB.
     # PersistentClient stores the vector database on disk at CHROMA_PATH.
-    # This means the vectors survive between runs — we only embed once.
+    # This means the vectors survive between runs: we only embed once.
     client = chromadb.PersistentClient(path=str(CHROMA_PATH))
 
     # Step 3: Handle existing collection.
@@ -178,7 +178,7 @@ def ingest(force: bool = False) -> int:
             client.delete_collection(COLLECTION_NAME)
             print(f"Deleted existing collection '{COLLECTION_NAME}' (force=True)")
         else:
-            # Reuse existing collection — no need to re-embed.
+            # Reuse existing collection: no need to re-embed.
             collection = client.get_collection(
                 name=COLLECTION_NAME,
                 embedding_function=get_embedding_function(),

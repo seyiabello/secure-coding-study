@@ -1,4 +1,4 @@
-"""
+﻿"""
 multiagent/graph.py
 -------------------
 LangGraph pipeline wiring all five agents plus a finalise node.
@@ -48,7 +48,7 @@ from multiagent.state import AgentState, create_initial_state, to_log_entry
 from evaluation.langfuse_eval import run_all_evals
 from config import langfuse as _langfuse
 
-LOG_PATH = Path("logs/multiagent_sessions.jsonl")
+LOG_PATH = Path(__file__).parent.parent / "logs" / "multiagent_sessions.jsonl"
 
 
 # -- Finalise node --------------------------------------------------------------
@@ -270,7 +270,7 @@ def check_credentials(username: str, password: str) -> bool:
         f"Expected coding_in_progress but got: {state.get('current_stage')}"
     )
     assert state.get("generated_code") is None, (
-        "generated_code should be None — participant has not submitted yet"
+        "generated_code should be None: participant has not submitted yet"
     )
 
     # 4. Simulate participant writing and submitting code.

@@ -1,19 +1,18 @@
-"""
+﻿"""
 multiagent/agents/code_reviewer.py
 -------------------------------------
-Code Reviewer agent — fourth agent in the multi-agent pipeline.
+Code Reviewer agent: fourth agent in the multi-agent pipeline.
 
 Runs two independent security checks on the generated code:
-  1. Bandit via MCP  — static analysis for common Python security issues
-  2. GPT-4o review   — checks whether each threat model mitigation was
+  1. Bandit via MCP: static analysis for common Python security issues
+  2. GPT-4o review: checks whether each threat model mitigation was
                        correctly implemented, and flags anything Bandit missed
 
 Findings from both sources are merged into a structured ReviewFinding list
 stored in state for the human participant to review and act on.
 
 Key constraint: bandit_findings_review is stored separately from the
-Verifier's bandit_findings_verify. These must never be merged or shared —
-the Verifier is a genuine independent second check, not a repeat.
+Verifier's bandit_findings_verify. These must never be merged or shared: the Verifier is a genuine independent second check, not a repeat.
 
 No RAG.
 
@@ -256,7 +255,7 @@ def verify_user_credentials(username, password):
     findings = result.get("review_findings") or []
     print(f"\n--- REVIEW FINDINGS ({len(findings)}) ---")
     for i, f in enumerate(findings, 1):
-        print(f"\n[{i}] {f['cwe_id']} — {f['severity']} — source: {f['source']}")
+        print(f"\n[{i}] {f['cwe_id']} - {f['severity']} - source: {f['source']}")
         print(f"     Line       : {f['line_number']}")
         print(f"     Description: {f['description']}")
         print(f"     Fix        : {f['suggested_fix']}")

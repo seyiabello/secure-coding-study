@@ -1,9 +1,9 @@
-"""
+﻿"""
 backend/models.py
 -----------------
 Pydantic request and response schemas for the FastAPI backend.
 
-Keep these flat — the frontend sees these shapes, not the internal
+Keep these flat: the frontend sees these shapes, not the internal
 AgentState TypedDicts which are richer but not serialisation-friendly.
 """
 
@@ -61,7 +61,7 @@ class HintRequest(BaseModel):
 
 
 class NextHintRequest(BaseModel):
-    code_so_far: str  # participant's current code — adaptive next-step suggestion
+    code_so_far: str  # participant's current code: adaptive next-step suggestion
 
 
 class SecurityHintRequest(BaseModel):

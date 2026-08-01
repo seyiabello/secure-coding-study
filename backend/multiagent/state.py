@@ -1,4 +1,4 @@
-"""
+﻿"""
 multiagent/state.py
 -------------------
 Shared LangGraph state schema for the multi-agent system.
@@ -11,7 +11,7 @@ Each agent reads the current state and returns a dict of updates.
 LangGraph merges those updates into the existing state automatically.
 
 All fields except the session-start fields are Optional because the state
-is populated progressively — early agents cannot know what later agents
+is populated progressively: early agents cannot know what later agents
 will produce.
 """
 
@@ -31,10 +31,10 @@ class PlannerOutput(TypedDict):
     """
     What the Planner agent produces.
 
-    steps               — the coding task broken into ordered sub-tasks
-    scope               — a sentence describing what the code should and
+    steps: the coding task broken into ordered sub-tasks
+    scope: a sentence describing what the code should and
                           should not do (boundaries of the implementation)
-    security_requirements — security properties the code must satisfy,
+    security_requirements: security properties the code must satisfy,
                             identified by the Planner before any code is written
     """
     steps: list[str]
@@ -46,11 +46,11 @@ class ThreatEntry(TypedDict):
     """
     One threat identified by the Threat Modeller.
 
-    cwe_id      — e.g. "CWE-89" — the official MITRE identifier
-    name        — short human-readable name of the weakness
-    severity    — "Critical", "High", or "Medium"
-    description — how this threat applies to the specific task
-    mitigation  — what the Code Generator should do to prevent it
+    cwe_id: e.g. "CWE-89" - the official MITRE identifier
+    name: short human-readable name of the weakness
+    severity: "Critical", "High", or "Medium"
+    description: how this threat applies to the specific task
+    mitigation: what the Code Generator should do to prevent it
     """
     cwe_id: str
     name: str
@@ -63,12 +63,12 @@ class ReviewFinding(TypedDict):
     """
     One security issue found by the Code Reviewer.
 
-    cwe_id        — the CWE this finding maps to
-    severity      — "Critical", "High", or "Medium"
-    description   — what the issue is and where it appears in the code
-    suggested_fix — a concrete recommendation to resolve the issue
-    line_number   — optional line number if identifiable from the code
-    source        — "bandit" if flagged by static analysis, "llm" if by review
+    cwe_id: the CWE this finding maps to
+    severity: "Critical", "High", or "Medium"
+    description: what the issue is and where it appears in the code
+    suggested_fix: a concrete recommendation to resolve the issue
+    line_number: optional line number if identifiable from the code
+    source: "bandit" if flagged by static analysis, "llm" if by review
     """
     cwe_id: str
     severity: str
@@ -82,9 +82,9 @@ class ThreatCheckResult(TypedDict):
     """
     The Verifier's verdict on one threat from the threat model.
 
-    cwe_id  — the threat being checked
-    passed  — True if the final code adequately mitigates this threat
-    notes   — explanation of why it passed or failed
+    cwe_id: the threat being checked
+    passed: True if the final code adequately mitigates this threat
+    notes: explanation of why it passed or failed
     """
     cwe_id: str
     passed: bool
@@ -95,10 +95,10 @@ class ExecutionResult(TypedDict):
     """
     Result of running the generated code in the sandbox.
 
-    passed   — True if the code executed without errors
-    stdout   — captured standard output (truncated if very long)
-    stderr   — captured standard error output
-    exit_code — the process exit code (0 = success)
+    passed: True if the code executed without errors
+    stdout: captured standard output (truncated if very long)
+    stderr: captured standard error output
+    exit_code: the process exit code (0 = success)
     """
     passed: bool
     stdout: str
@@ -110,11 +110,11 @@ class VerificationResult(TypedDict):
     """
     The Verifier agent's complete output.
 
-    overall_pass   — True only if all threats passed AND execution passed
-    threats_checked — per-threat verdict from the Verifier
-    bandit_findings — independent Bandit run results (separate from Reviewer)
-    execution_result — sandbox execution result
-    notes           — overall summary from the Verifier
+    overall_pass: True only if all threats passed AND execution passed
+    threats_checked: per-threat verdict from the Verifier
+    bandit_findings: independent Bandit run results (separate from Reviewer)
+    execution_result: sandbox execution result
+    notes: overall summary from the Verifier
     """
     overall_pass: bool
     threats_checked: list[ThreatCheckResult]
@@ -127,13 +127,13 @@ class ParticipantDecision(TypedDict):
     """
     The human participant's decision at one stage of the pipeline.
 
-    action           — one of "approve", "revise", or "override"
+    action: one of "approve", "revise", or "override"
                        approve  = accept the agent's output and move on
                        revise   = modify the agent's output before moving on
                        override = completely replace the agent's output
-    revised_content  — the participant's replacement text if action is
+    revised_content: the participant's replacement text if action is
                        "revise" or "override"; None if action is "approve"
-    timestamp        — ISO 8601 UTC timestamp of when the decision was made
+    timestamp: ISO 8601 UTC timestamp of when the decision was made
     """
     action: str
     revised_content: Optional[str]
@@ -144,9 +144,9 @@ class HintRecord(TypedDict):
     """
     One hint request made by the participant during the coding stage.
 
-    step_index — which plan step the hint was for (0-indexed); -1 for adaptive hints
-    level      — "direction" | "pseudocode" | "partial" | "full" | "adaptive" | "security"
-    timestamp  — ISO 8601 UTC when the hint was requested
+    step_index: which plan step the hint was for (0-indexed); -1 for adaptive hints
+    level: "direction" | "pseudocode" | "partial" | "full" | "adaptive" | "security"
+    timestamp: ISO 8601 UTC when the hint was requested
     """
     step_index: int
     level: str
@@ -160,13 +160,13 @@ class StepHintCap(TypedDict):
     Computed once after the threat model is approved by running the step
     classifier, which matches each step against threat model mitigations.
 
-    step_index — 0-indexed position of the step in plan.steps
-    max_level  — highest level the participant may request for this step:
-                 "direction"  — plain English only (step directly implements a mitigation)
-                 "pseudocode" — up to comment-only skeleton
-                 "partial"    — up to partial implementation with TODOs
-                 "full"       — full implementation (boilerplate steps only)
-    reason     — why this cap was assigned (for logging/transparency)
+    step_index: 0-indexed position of the step in plan.steps
+    max_level: highest level the participant may request for this step:
+                 "direction" - plain English only (step directly implements a mitigation)
+                 "pseudocode" - up to comment-only skeleton
+                 "partial" - up to partial implementation with TODOs
+                 "full" - full implementation (boilerplate steps only)
+    reason: why this cap was assigned (for logging/transparency)
     """
     step_index: int
     max_level: str
@@ -177,9 +177,9 @@ class CodingAnnotations(TypedDict):
     """
     Participant's annotation gate answers. Required before submitting code for review.
 
-    what_does_code_do  — free-text explanation of what their code does
-    threats_addressed  — list of threats they believe their code mitigates
-    submitted_at       — ISO 8601 UTC when the annotation gate was submitted
+    what_does_code_do: free-text explanation of what their code does
+    threats_addressed: list of threats they believe their code mitigates
+    submitted_at: ISO 8601 UTC when the annotation gate was submitted
     """
     what_does_code_do: str
     threats_addressed: list[str]
@@ -190,12 +190,12 @@ class HitlCodingMetrics(TypedDict):
     """
     All human-in-the-loop metrics collected during the coding stage.
 
-    hint_depth_reached      — deepest hint level used across all steps
+    hint_depth_reached: deepest hint level used across all steps
                               (direction=1, pseudocode=2, partial=3, full=4, 0=none)
-    hints_requested         — ordered list of every hint request with timestamp
-    time_in_coding_seconds  — total seconds spent at the coding stage
-    confidence_rating       — participant self-assessed confidence 1 (low) to 5 (high)
-    annotations             — annotation gate answers (what code does, which threats addressed)
+    hints_requested: ordered list of every hint request with timestamp
+    time_in_coding_seconds: total seconds spent at the coding stage
+    confidence_rating: participant self-assessed confidence 1 (low) to 5 (high)
+    annotations: annotation gate answers (what code does, which threats addressed)
     """
     hint_depth_reached: int
     hints_requested: list[HintRecord]
@@ -217,7 +217,7 @@ class AgentState(TypedDict):
 
     Fields are grouped by which part of the pipeline populates them.
     All agent output fields are Optional because the state is built up
-    progressively — no agent knows what comes after it.
+    progressively: no agent knows what comes after it.
     """
 
     # ── Session metadata ──────────────────────────────────────────────────────
@@ -238,7 +238,7 @@ class AgentState(TypedDict):
 
     task_order: Optional[int]
     # 1–4. The position this task appeared in the participant's randomised sequence.
-    # Required covariate for statistical analysis — controls for learning effects.
+    # Required covariate for statistical analysis: controls for learning effects.
 
     session_start: str
     # ISO 8601 UTC timestamp set when the session begins.
@@ -334,7 +334,7 @@ class AgentState(TypedDict):
 
     bandit_findings_verify: Optional[list[dict]]
     # Independent Bandit run by the Verifier. Must not reuse
-    # bandit_findings_review — the Verifier is a genuine second check.
+    # bandit_findings_review: the Verifier is a genuine second check.
 
     verification_result: Optional[VerificationResult]
     # The Verifier's complete output including per-threat verdicts,

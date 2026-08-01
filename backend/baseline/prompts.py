@@ -1,9 +1,9 @@
-"""
+﻿"""
 baseline/prompts.py
 -------------------
 System prompt for the baseline single-agent condition.
 
-Intentionally minimal — no security instructions, no structured review steps.
+Intentionally minimal: no security instructions, no structured review steps.
 Do not add security guidance here; that would bias the comparison.
 """
 

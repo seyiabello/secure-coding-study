@@ -1,4 +1,4 @@
-"""
+﻿"""
 mcp_client.py
 -------------
 Unified MCP client that connects to all three MCP servers.
@@ -94,7 +94,7 @@ async def call_tool(
     Parameters
     ----------
     client    : active MultiServerMCPClient context (from get_client())
-    tool_name : exact name of the tool — one of "run_bandit", "search_nvd",
+    tool_name : exact name of the tool: one of "run_bandit", "search_nvd",
                 "execute_code"
     arguments : dict of arguments matching the tool's input schema
 
@@ -144,7 +144,7 @@ async def call_tool(
             text = str(first)
         return json.loads(text)
 
-    # Already a dict (defensive — should not normally happen).
+    # Already a dict (defensive: should not normally happen).
     if isinstance(raw, dict):
         return raw
 
@@ -163,9 +163,9 @@ async def _run_test() -> None:
 
     Verifies:
       1. All three servers start and connect successfully
-      2. run_bandit  — detects a weak hashing issue in test code
-      3. search_nvd  — returns real CVEs for "authentication bypass"
-      4. execute_code — runs simple working code and captures output
+      2. run_bandit: detects a weak hashing issue in test code
+      3. search_nvd: returns real CVEs for "authentication bypass"
+      4. execute_code: runs simple working code and captures output
     """
     print("Connecting to all MCP servers...\n")
     client = get_client()

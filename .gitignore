@@ -1,6 +1,5 @@
 .env
 venv/
-logs/*.jsonl
 backend/logs/
 .playwright-mcp/
 __pycache__/

@@ -1,10 +1,16 @@
-name: Azure Deploy
+name: Infra
+
+# Manual-only workflow for provisioning or tearing down Azure infrastructure.
+# Use "apply" on first setup or after a destroy; use "destroy" at study end to
+# save costs (session logs are downloaded as a GitHub artifact before destroy).
+#
+# Normal code deploys use cd.yml instead of this workflow.
 
 on:
   workflow_dispatch:
     inputs:
       action:
-        description: "Terraform action"
+        description: Terraform action
         required: true
         default: apply
         type: choice
@@ -13,7 +19,7 @@ on:
           - destroy
 
 permissions:
-  id-token: write   # required for OIDC login
+  id-token: write
   contents: read
 
 env:
@@ -25,10 +31,12 @@ env:
   TF_VAR_tenant_id: ${{ secrets.AZURE_TENANT_ID }}
   TF_VAR_openai_api_key: ${{ secrets.OPENAI_API_KEY }}
   TF_VAR_frontend_origin: ${{ secrets.FRONTEND_ORIGIN }}
+  TF_VAR_langfuse_public_key: ${{ secrets.LANGFUSE_PUBLIC_KEY }}
+  TF_VAR_langfuse_secret_key: ${{ secrets.LANGFUSE_SECRET_KEY }}
 
 jobs:
   run:
-    name: ${{ github.event.inputs.action == 'apply' && 'Deploy' || 'Destroy' }}
+    name: ${{ github.event.inputs.action == 'apply' && 'Provision infra' || 'Destroy infra' }}
     runs-on: ubuntu-latest
 
     steps:
@@ -48,8 +56,8 @@ jobs:
         working-directory: terraform
         run: terraform init
 
-      # ── APPLY ──────────────────────────────────────────────────────────────
-      # Stage 1: provision ACR and storage before the image exists
+      # --- APPLY ---
+      # Stage 1: provision ACR and supporting infra before the image exists.
 
       - name: Provision ACR and supporting infra
         if: github.event.inputs.action == 'apply'
@@ -65,7 +73,7 @@ jobs:
             -target=azurerm_role_assignment.aci_acr_pull \
             -target=time_sleep.rbac_propagation
 
-      # Stage 2: build the image with ChromaDB baked in, push to ACR
+      # Stage 2: build the image with ChromaDB baked in, push to ACR.
 
       - uses: actions/setup-python@v5
         if: github.event.inputs.action == 'apply'
@@ -73,11 +81,14 @@ jobs:
           python-version: "3.11"
           cache: pip
 
-      - name: Ingest ChromaDB corpus
+      - name: Install Python dependencies
         if: github.event.inputs.action == 'apply'
-        run: |
-          pip install -r requirements.txt
-          cd backend && python -m rag.ingest
+        run: pip install -r requirements.txt
+
+      - name: Ingest CWE corpus into ChromaDB
+        if: github.event.inputs.action == 'apply'
+        run: python -m rag.ingest
+        working-directory: backend
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
@@ -89,7 +100,7 @@ jobs:
           docker build -t "${ACR_SERVER}/api:latest" .
           docker push "${ACR_SERVER}/api:latest"
 
-      # Stage 3: full apply — creates ACI now that the image exists
+      # Stage 3: full apply now that the image exists.
 
       - name: Deploy ACI
         if: github.event.inputs.action == 'apply'
@@ -100,14 +111,14 @@ jobs:
         if: github.event.inputs.action == 'apply'
         working-directory: terraform
         run: |
-          API_URL=$(terraform output -raw api_fqdn)
-          echo "### Deployment complete" >> "$GITHUB_STEP_SUMMARY"
-          echo "**API URL:** ${API_URL}" >> "$GITHUB_STEP_SUMMARY"
+          URL=$(terraform output -raw api_fqdn)
+          echo "### Provisioning complete" >> "$GITHUB_STEP_SUMMARY"
+          echo "**API URL:** $URL" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "Set \`NEXT_PUBLIC_API_URL=${API_URL}\` in your Vercel project environment variables and redeploy." >> "$GITHUB_STEP_SUMMARY"
+          echo "Set \`NEXT_PUBLIC_API_URL=$URL\` in Vercel project settings and redeploy the frontend." >> "$GITHUB_STEP_SUMMARY"
 
-      # ── DESTROY ────────────────────────────────────────────────────────────
-      # Download session logs first so data survives the destroy
+      # --- DESTROY ---
+      # Download session logs before tearing down so data is not lost.
 
       - name: Download session logs
         if: github.event.inputs.action == 'destroy'

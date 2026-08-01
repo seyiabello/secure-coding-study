@@ -1,20 +1,20 @@
-"""
+﻿"""
 multiagent/agents/threat_modeller.py
 -------------------------------------
-Threat Modeller agent — second stage of the multi-agent pipeline.
+Threat Modeller agent: second stage of the multi-agent pipeline.
 
 Takes the task and the Planner's output, then produces a structured threat model
 grounded in real security data from two sources:
-  1. RAG  — top-3 CWE chunks from the MITRE CWE Top 25 corpus
-  2. MCP  — recent CVEs from NIST NVD matching the task's primary threat
+  1. RAG: top-3 CWE chunks from the MITRE CWE Top 25 corpus
+  2. MCP: recent CVEs from NIST NVD matching the task's primary threat
 
 Output (stored in state["threats"] and state["rag_context"]):
   rag_context : the raw RAG retrieval results (stored for logging/transparency)
-  threats     : list[ThreatEntry] — each threat has cwe_id, name, severity,
+  threats     : list[ThreatEntry] - each threat has cwe_id, name, severity,
                 task-specific description, and actionable mitigation
 
 The Threat Modeller's mitigations are passed forward to the Code Generator,
-Code Reviewer, and Verifier — so they must be concrete and implementable,
+Code Reviewer, and Verifier: so they must be concrete and implementable,
 not generic advice.
 """
 
@@ -131,7 +131,7 @@ async def run_threat_modeller(state: AgentState) -> dict:
     dict
         State updates:
           rag_context    : raw RAG retrieval results (for logging)
-          threats        : list[ThreatEntry] — the threat model
+          threats        : list[ThreatEntry] - the threat model
           current_stage  : "code_generation" on success, "error" on failure
           error          : None on success, error message on failure
     """
@@ -166,13 +166,13 @@ async def run_threat_modeller(state: AgentState) -> dict:
                 timeout=25.0,
             )
         except asyncio.TimeoutError:
-            print("[Threat Modeller] NVD call timed out after 25 s — continuing with RAG only.")
+            print("[Threat Modeller] NVD call timed out after 25 s: continuing with RAG only.")
             nvd_result = {
                 "cves": [], "total_found": 0, "keyword": nvd_keyword,
-                "error": "NVD search timed out — proceeding with CWE context only.",
+                "error": "NVD search timed out: proceeding with CWE context only.",
             }
         except Exception as nvd_exc:
-            print(f"[Threat Modeller] NVD call failed: {nvd_exc} — continuing with RAG only.")
+            print(f"[Threat Modeller] NVD call failed: {nvd_exc} - continuing with RAG only.")
             nvd_result = {
                 "cves": [], "total_found": 0, "keyword": nvd_keyword,
                 "error": f"NVD search failed: {nvd_exc}",

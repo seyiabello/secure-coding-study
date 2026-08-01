@@ -1,4 +1,4 @@
-"""
+﻿"""
 backend/utils.py
 ----------------
 Shared helpers for route handlers.
@@ -15,7 +15,7 @@ def serialize_state(state: dict) -> dict:
     """
     Convert an AgentState dict to a JSON-safe dict.
 
-    AgentState contains datetime strings and nested TypedDicts — all are
+    AgentState contains datetime strings and nested TypedDicts: all are
     JSON-serialisable via default=str as a safety net for any edge cases.
     """
     return json.loads(json.dumps(state, default=str))

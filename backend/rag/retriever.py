@@ -1,15 +1,15 @@
-"""
+﻿"""
 rag/retriever.py
 ----------------
 Advanced RAG retrieval pipeline for the CWE Top 25 corpus.
 
 Pipeline:
-  1. Query rewrite  — GPT-4o expands the task into security search terms
+  1. Query rewrite: GPT-4o expands the task into security search terms
                       and identifies relevant CWE domains
-  2. Metadata filter — restrict ChromaDB search to relevant domains only
-  3. Similarity search — top-10 results by cosine similarity
-  4. LLM re-rank — GPT-4o selects the top-3 most relevant chunks
-  5. Return — structured list ready for injection into agent prompts
+  2. Metadata filter: restrict ChromaDB search to relevant domains only
+  3. Similarity search: top-10 results by cosine similarity
+  4. LLM re-rank: GPT-4o selects the top-3 most relevant chunks
+  5. Return: structured list ready for injection into agent prompts
 
 Used by: Threat Modeller and Verifier agents only.
 """
@@ -86,8 +86,8 @@ def rewrite_query(task: str) -> tuple[str, list[str]]:
 
     Why rewrite at all?
     A task like "write a login form" is too generic for a good vector search.
-    The rewritten version — "authentication password brute force credential
-    validation session management" — matches CWE descriptions much better.
+    The rewritten version: "authentication password brute force credential
+    validation session management" - matches CWE descriptions much better.
 
     Returns
     -------
@@ -202,7 +202,7 @@ def rerank(task: str, candidates: list[dict], n_final: int = N_FINAL_RESULTS) ->
     Returns the top-n candidates in order of relevance.
     """
     if len(candidates) <= n_final:
-        # Fewer candidates than requested — return all of them.
+        # Fewer candidates than requested: return all of them.
         return candidates
 
     # Build a compact summary of each candidate for the prompt.

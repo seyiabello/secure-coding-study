@@ -1,0 +1,90 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  ARM_USE_OIDC: "true"
+  ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+jobs:
+  deploy:
+    name: Build and deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      # Bake ChromaDB into the image at build time.
+      # The corpus is static so this only needs to run when it changes.
+      - name: Ingest CWE corpus into ChromaDB
+        run: python -m rag.ingest
+        working-directory: backend
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "~1.9"
+
+      - name: Terraform init
+        working-directory: terraform
+        run: terraform init
+
+      - name: Get ACR login server
+        id: acr
+        working-directory: terraform
+        run: echo "server=$(terraform output -raw acr_login_server)" >> $GITHUB_OUTPUT
+
+      - name: Build and push Docker image
+        run: |
+          IMAGE="${{ steps.acr.outputs.server }}/api"
+          az acr login --name "${IMAGE%%.*}"
+          docker build -t "${IMAGE}:${{ github.sha }}" -t "${IMAGE}:latest" .
+          docker push "${IMAGE}:${{ github.sha }}"
+          docker push "${IMAGE}:latest"
+
+      # Passes the commit SHA as image_tag so the ACI container group is
+      # recreated with the new image on every deploy.
+      - name: Deploy to ACI
+        working-directory: terraform
+        run: terraform apply -auto-approve -var="image_tag=${{ github.sha }}"
+        env:
+          TF_VAR_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          TF_VAR_tenant_id: ${{ secrets.AZURE_TENANT_ID }}
+          TF_VAR_openai_api_key: ${{ secrets.OPENAI_API_KEY }}
+          TF_VAR_frontend_origin: ${{ secrets.FRONTEND_ORIGIN }}
+          TF_VAR_langfuse_public_key: ${{ secrets.LANGFUSE_PUBLIC_KEY }}
+          TF_VAR_langfuse_secret_key: ${{ secrets.LANGFUSE_SECRET_KEY }}
+
+      - name: Print deployment URL
+        working-directory: terraform
+        run: |
+          URL=$(terraform output -raw api_fqdn)
+          echo "### Deployed" >> "$GITHUB_STEP_SUMMARY"
+          echo "**API URL:** $URL" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Image:** \`${{ github.sha }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Set \`NEXT_PUBLIC_API_URL=$URL\` in Vercel project settings and redeploy the frontend." >> "$GITHUB_STEP_SUMMARY"

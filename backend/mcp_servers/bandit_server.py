@@ -1,4 +1,4 @@
-"""
+﻿"""
 mcp_servers/bandit_server.py
 -----------------------------
 MCP server that runs Bandit static security analysis on Python code.
@@ -6,7 +6,7 @@ MCP server that runs Bandit static security analysis on Python code.
 Exposes one tool: run_bandit(code) -> findings JSON.
 
 Used by: Code Reviewer and Verifier agents independently.
-Each agent makes its own call — results are never shared between them.
+Each agent makes its own call: results are never shared between them.
 
 Run standalone to test before wiring into MultiServerMCPClient:
     python mcp_servers/bandit_server.py --test
@@ -43,7 +43,7 @@ def _run_bandit(code: str) -> dict:
 
     Bandit exit codes:
       0 = analysis ran, no issues found
-      1 = analysis ran, issues found  (this is normal — not an error)
+      1 = analysis ran, issues found  (this is normal: not an error)
       2 = Bandit itself crashed or could not run
 
     Returns
@@ -56,7 +56,7 @@ def _run_bandit(code: str) -> dict:
     tmp_path = None
     try:
         # Write the code to a temporary .py file on disk.
-        # Bandit requires a real file — it cannot read from stdin.
+        # Bandit requires a real file: it cannot read from stdin.
         with tempfile.NamedTemporaryFile(
             mode="w",
             suffix=".py",
@@ -68,7 +68,7 @@ def _run_bandit(code: str) -> dict:
 
         # Run Bandit as a subprocess.
         # -f json  : output in JSON format
-        # -q       : quiet mode — suppress progress output
+        # -q       : quiet mode: suppress progress output
         # timeout  : kill the process if it takes more than 30 seconds
         result = subprocess.run(
             ["bandit", "-f", "json", "-q", tmp_path],
@@ -91,7 +91,7 @@ def _run_bandit(code: str) -> dict:
         raw = json.loads(result.stdout)
 
         # Normalise each finding into a consistent structure.
-        # Bandit's raw output has verbose field names — we simplify them.
+        # Bandit's raw output has verbose field names: we simplify them.
         findings = []
         for r in raw.get("results", []):
             # Bandit provides CWE data as a nested object with an 'id' field.
@@ -100,7 +100,7 @@ def _run_bandit(code: str) -> dict:
 
             findings.append({
                 "test_id":      r.get("test_id"),
-                # e.g. "B106" — Bandit's own test identifier
+                # e.g. "B106" - Bandit's own test identifier
                 "test_name":    r.get("test_name"),
                 # e.g. "hardcoded_password_funcarg"
                 "severity":     r.get("issue_severity"),
@@ -112,7 +112,7 @@ def _run_bandit(code: str) -> dict:
                 "line_number":  r.get("line_number"),
                 # Line in the code where the issue was found
                 "cwe_id":       cwe_id,
-                # e.g. "CWE-89" — maps to our CWE corpus
+                # e.g. "CWE-89" - maps to our CWE corpus
                 "code_snippet": r.get("code", "").strip(),
                 # The actual line(s) of code that triggered the finding
             })
@@ -159,7 +159,7 @@ async def list_tools() -> list[Tool]:
 
     Called automatically by the client during initialisation.
     The inputSchema is a JSON Schema object describing what arguments
-    the tool accepts — the client validates calls against this.
+    the tool accepts: the client validates calls against this.
     """
     return [
         Tool(
@@ -193,7 +193,7 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
     on this server. We check the tool name, run the analysis, and return
     the result as a TextContent object containing a JSON string.
 
-    TextContent is an MCP type — it wraps text to be returned to the agent.
+    TextContent is an MCP type: it wraps text to be returned to the agent.
     The agent receives it as a string and parses the JSON itself.
     """
     if name != TOOL_NAME:

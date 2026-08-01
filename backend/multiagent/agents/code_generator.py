@@ -1,17 +1,17 @@
-"""
+﻿"""
 multiagent/agents/code_generator.py
 -------------------------------------
-Code Generator agent — third stage of the multi-agent pipeline.
+Code Generator agent: third stage of the multi-agent pipeline.
 
 HITL REDESIGN: The Code Generator is a coding mentor. The participant writes
 the code themselves. The agent provides step-scoped, escalating help via a
 per-step hint ladder, plus two code-reading endpoints:
 
   Per-step hint ladder (four levels, per plan step):
-    "direction"  — plain English: what to do for this step and why
-    "pseudocode" — comment-only skeleton scoped to this step
-    "partial"    — partial implementation with security TODOs for this step
-    "full"       — complete implementation (boilerplate steps only)
+    "direction" - plain English: what to do for this step and why
+    "pseudocode" - comment-only skeleton scoped to this step
+    "partial" - partial implementation with security TODOs for this step
+    "full" - complete implementation (boilerplate steps only)
 
   Each step's maximum level is capped by the step classifier:
     - Security-critical steps (e.g. parameterised query, bcrypt): "direction" only
@@ -28,11 +28,11 @@ per-step hint ladder, plus two code-reading endpoints:
         issue or missing mitigation. Always whole-code, security-focused.
 
 Public API:
-  get_step_hint(state, step_index, level) — request a per-step hint
-  get_next_hint(state, code_so_far)       — adaptive "what should I do next?"
-  get_security_hint(state, code)          — real-time security issue detector
-  finalize_code(state, user_code, ...)    — submit final code and HITL metrics
-  run_code_generator(state)              — LangGraph node (initialises stage)
+  get_step_hint(state, step_index, level) - request a per-step hint
+  get_next_hint(state, code_so_far) - adaptive "what should I do next?"
+  get_security_hint(state, code) - real-time security issue detector
+  finalize_code(state, user_code, ...) - submit final code and HITL metrics
+  run_code_generator(state) - LangGraph node (initialises stage)
 """
 
 import asyncio
@@ -306,7 +306,7 @@ async def get_step_hint(state: AgentState, step_index: int, level: str) -> dict:
     """
     Returns a hint for a specific plan step at the requested level.
 
-    The route handler is responsible for enforcing step_hint_caps — this
+    The route handler is responsible for enforcing step_hint_caps: this
     function generates the hint regardless of cap. Cap enforcement happens
     before calling this function.
 
@@ -388,7 +388,7 @@ async def get_next_hint(state: AgentState, code_so_far: str) -> dict:
     Adaptive hint: reads the participant's current code and suggests what to do next.
 
     Identifies which plan steps are done/missing/wrong and returns a focused,
-    targeted suggestion — not a full review. Replaces the old whole-task direction hint.
+    targeted suggestion: not a full review. Replaces the old whole-task direction hint.
 
     Parameters
     ----------
@@ -452,7 +452,7 @@ async def get_security_hint(state: AgentState, code_so_far: str) -> dict:
     """
     Analyses the participant's current code and returns one security-focused hint.
 
-    Whole-code pass — not scoped to a step. Flags the single most important
+    Whole-code pass: not scoped to a step. Flags the single most important
     security issue or missing mitigation in what has been written so far.
 
     Parameters
@@ -543,7 +543,7 @@ def finalize_code(
     }
 
     print(
-        f"[Code Generator] Code finalised — "
+        f"[Code Generator] Code finalised: "
         f"hint depth reached: {depth_reached}, "
         f"confidence: {confidence_rating}/5, "
         f"time: {time_in_coding_seconds:.0f}s"
@@ -570,7 +570,7 @@ async def run_code_generator(state: AgentState) -> dict:
     so the graph knows to pause and wait for the human. The frontend drives
     get_step_hint / get_next_hint / get_security_hint / finalize_code.
     """
-    print("[Code Generator] Coding stage initialised — waiting for participant.")
+    print("[Code Generator] Coding stage initialised: waiting for participant.")
 
     return {
         "generated_code":        None,
@@ -611,8 +611,8 @@ async def _run_test():
         ),
         "security_requirements": [
             "Use parameterised queries to prevent SQL injection",
-            "Hash passwords with bcrypt — never compare plaintext",
-            "Return a generic failure response — do not reveal which field was wrong",
+            "Hash passwords with bcrypt: never compare plaintext",
+            "Return a generic failure response: do not reveal which field was wrong",
             "Validate input types and lengths before touching the database",
         ],
     }
@@ -638,18 +638,18 @@ async def _run_test():
     sep = "=" * 60
 
     # Test step hints at each level for a security-critical step (step 2: parameterised query)
-    print(f"\n{sep}\nSTEP 2 (parameterised query) — DIRECTION\n{sep}")
+    print(f"\n{sep}\nSTEP 2 (parameterised query) - DIRECTION\n{sep}")
     r = await get_step_hint(state, 2, "direction")
     print(r["content"])
     if r["security_note"]:
         print(f"\n[Security] {r['security_note']}")
 
-    print(f"\n{sep}\nSTEP 2 (parameterised query) — PSEUDOCODE\n{sep}")
+    print(f"\n{sep}\nSTEP 2 (parameterised query) - PSEUDOCODE\n{sep}")
     r = await get_step_hint(state, 2, "pseudocode")
     print(r["content"])
 
     # Test step hints for a boilerplate step (step 1: open DB connection)
-    print(f"\n{sep}\nSTEP 1 (open DB connection) — FULL\n{sep}")
+    print(f"\n{sep}\nSTEP 1 (open DB connection) - FULL\n{sep}")
     r = await get_step_hint(state, 1, "full")
     print(r["content"])
 

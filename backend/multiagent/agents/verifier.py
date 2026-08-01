@@ -1,19 +1,19 @@
-"""
+﻿"""
 multiagent/agents/verifier.py
 ------------------------------
-Verifier agent — fifth and final agent in the multi-agent pipeline.
+Verifier agent: fifth and final agent in the multi-agent pipeline.
 
 Gives a per-threat verdict on whether the generated code correctly implements
 every mitigation from the original threat model. All four checks run
 independently from the Code Reviewer.
 
-  1. Bandit via MCP   — static analysis (independent run, separate state field)
-  2. Sandbox via MCP  — executes the code, verifies it runs without errors
-  3. RAG retrieval    — re-queries CWE corpus independently to anchor verdicts
-  4. GPT-4o synthesis — per-threat PASS/FAIL verdict + overall assessment
+  1. Bandit via MCP: static analysis (independent run, separate state field)
+  2. Sandbox via MCP: executes the code, verifies it runs without errors
+  3. RAG retrieval: re-queries CWE corpus independently to anchor verdicts
+  4. GPT-4o synthesis: per-threat PASS/FAIL verdict + overall assessment
 
 Key constraint: bandit_findings_verify is stored separately from
-bandit_findings_review. These must never be merged — the Verifier is a
+bandit_findings_review. These must never be merged: the Verifier is a
 genuine second check, not a repeat of the Code Reviewer's run.
 
 Run standalone:
@@ -259,7 +259,7 @@ async def _run_test() -> None:
     task  = "Write a Python function that checks a username and password against a SQLite database"
     state = create_initial_state("TEST", task)
 
-    # Secure code — expect overall PASS
+    # Secure code: expect overall PASS
     state["generated_code"] = """\
 import sqlite3
 import bcrypt

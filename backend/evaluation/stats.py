@@ -1,4 +1,4 @@
-"""
+﻿"""
 evaluation/stats.py
 --------------------
 Statistical analysis for the secure coding study.
@@ -239,7 +239,7 @@ def print_report(results: Optional[dict] = None) -> None:
 
     n = results["n_sessions"]
     print(f"\n{'='*60}")
-    print(f"SECURE CODING STUDY — STATISTICAL RESULTS")
+    print(f"SECURE CODING STUDY: STATISTICAL RESULTS")
     print(f"{'='*60}")
     print(f"Sessions: baseline={n['baseline']}  multiagent={n['multiagent']}")
 
@@ -273,7 +273,7 @@ def print_report(results: Optional[dict] = None) -> None:
         if "error" in t:
             print(f"  {t['test']}: {t['error']}")
             continue
-        sig = "significant — task difficulty is a confound" if t["significant"] else "not significant"
+        sig = "significant: task difficulty is a confound" if t["significant"] else "not significant"
         print(f"  {t['test']}: H={t['H']}  p={t['p_value']}  {sig}")
 
     print(f"\n--- LEARNING EFFECT (Wilcoxon: task_order 1 vs 4) ---")
@@ -281,7 +281,7 @@ def print_report(results: Optional[dict] = None) -> None:
         if "error" in t:
             print(f"  {t['test']}: {t['error']}")
             continue
-        sig = "significant — order effect present" if t["significant"] else "not significant"
+        sig = "significant: order effect present" if t["significant"] else "not significant"
         print(f"  {t['test']}: W={t['W']}  p={t['p_value']}  n={t['n_pairs']} pairs  {sig}")
 
     print(f"\nFull results written to: {RESULTS_PATH}")

@@ -1,4 +1,4 @@
-"""
+﻿"""
 mcp_servers/nist_nvd_server.py
 -------------------------------
 MCP server that queries the NIST National Vulnerability Database (NVD)
@@ -47,7 +47,7 @@ TOOL_NAME = "search_nvd"
 
 NVD_API_URL  = "https://services.nvd.nist.gov/rest/json/cves/2.0"
 MAX_RESULTS  = 5     # default number of CVEs to return per search
-MAX_CAP      = 10    # hard cap — never return more than this to keep prompts short
+MAX_CAP      = 10    # hard cap: never return more than this to keep prompts short
 REQUEST_TIMEOUT = 10.0  # seconds before giving up on the API call
 
 # ── Core NVD query logic ───────────────────────────────────────────────────────
@@ -134,7 +134,7 @@ async def _search_nvd(keyword: str, max_results: int = MAX_RESULTS) -> dict:
         cve = item.get("cve", {})
 
         # Extract English description only.
-        # NVD provides descriptions in multiple languages — we want English.
+        # NVD provides descriptions in multiple languages: we want English.
         descriptions = cve.get("descriptions", [])
         description = next(
             (d["value"] for d in descriptions if d.get("lang") == "en"),
@@ -142,7 +142,7 @@ async def _search_nvd(keyword: str, max_results: int = MAX_RESULTS) -> dict:
         )
 
         # Extract CVSS v3 score and severity.
-        # NVD may have v3.1 or v3.0 metrics — check both.
+        # NVD may have v3.1 or v3.0 metrics: check both.
         severity  = "N/A"
         cvss_score = None
         for metric_key in ("cvssMetricV31", "cvssMetricV30"):

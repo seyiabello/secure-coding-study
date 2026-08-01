@@ -1,13 +1,13 @@
-"""
+﻿"""
 backend/routes/hints.py
 ------------------------
-Code Generator HITL endpoints — all scoped under /session/{thread_id}.
+Code Generator HITL endpoints: all scoped under /session/{thread_id}.
 
-POST /session/{thread_id}/hint           — request a per-step hint
-POST /session/{thread_id}/next-hint      — adaptive "what should I do next?" (reads code)
-POST /session/{thread_id}/security-hint  — whole-code real-time security feedback
-GET  /session/{thread_id}/step-caps      — per-step hint depth caps (computed once, cached)
-POST /session/{thread_id}/finalize       — submit code + metrics, resume to Code Reviewer
+POST /session/{thread_id}/hint: request a per-step hint
+POST /session/{thread_id}/next-hint: adaptive "what should I do next?" (reads code)
+POST /session/{thread_id}/security-hint: whole-code real-time security feedback
+GET  /session/{thread_id}/step-caps: per-step hint depth caps (computed once, cached)
+POST /session/{thread_id}/finalize: submit code + metrics, resume to Code Reviewer
 
 The step-caps endpoint runs the step classifier (one GPT-4o call) on first
 request and stores the result in graph state so subsequent calls are instant.
@@ -72,7 +72,7 @@ async def get_next_hint(thread_id: str, req: NextHintRequest):
     Adaptive hint: reads the participant's current code and suggests what to do next.
 
     Identifies which plan steps are done/missing/wrong and returns a focused
-    next-step suggestion. Does not reveal implementation — only direction.
+    next-step suggestion. Does not reveal implementation: only direction.
     """
     from multiagent.agents.code_generator import get_next_hint as _get_next_hint
     from multiagent.graph import get_current_state
@@ -84,7 +84,7 @@ async def get_next_hint(thread_id: str, req: NextHintRequest):
 
 @router.post("/{thread_id}/security-hint")
 async def get_security_hint(thread_id: str, req: SecurityHintRequest):
-    """Whole-code security-focused hint — flags the single most pressing issue."""
+    """Whole-code security-focused hint: flags the single most pressing issue."""
     from multiagent.agents.code_generator import get_security_hint as _get_security_hint
     from multiagent.graph import get_current_state
 

@@ -1,4 +1,4 @@
-"""
+﻿"""
 multiagent/step_classifier.py
 ------------------------------
 Classifies each Planner step by its maximum hint level.
@@ -6,12 +6,12 @@ Classifies each Planner step by its maximum hint level.
 Run once after the threat model is approved. Uses one GPT-4o call to match
 each step against the threat model mitigations and assign a cap:
 
-  "direction"  — step directly implements a named threat mitigation.
+  "direction" - step directly implements a named threat mitigation.
                  Only plain-English hints are revealed; no code ever shown.
-  "pseudocode" — step is security-adjacent (touches sensitive data or logic)
+  "pseudocode" - step is security-adjacent (touches sensitive data or logic)
                  but is not the core mitigation. Pseudocode is the ceiling.
-  "partial"    — general logic step. Partial implementation (with TODOs) allowed.
-  "full"       — pure boilerplate (imports, DB connection, resource cleanup).
+  "partial" - general logic step. Partial implementation (with TODOs) allowed.
+  "full" - pure boilerplate (imports, DB connection, resource cleanup).
                  Full code may be shown because the security work is elsewhere.
 
 The result is stored in state["step_hint_caps"] and returned to the frontend
@@ -32,22 +32,22 @@ threats with their mitigations.
 
 For each step assign exactly one of these max_hint_level values:
 
-  "full"       — Pure boilerplate: imports, opening/closing DB connections,
+  "full" - Pure boilerplate: imports, opening/closing DB connections,
                  variable declarations, resource cleanup. The participant cannot
                  introduce a security vulnerability by implementing this step
                  incorrectly. Show full code.
 
-  "partial"    — General logic: control flow, return values, comparisons, error
+  "partial" - General logic: control flow, return values, comparisons, error
                  handling that doesn't involve security-critical sanitisation.
                  Show partial implementation with TODO markers for anything
                  security-sensitive within this step.
 
-  "pseudocode" — The step involves data or logic that could be mishandled
+  "pseudocode" - The step involves data or logic that could be mishandled
                  (e.g. passing user input to a function, building a query,
                  calling an API) but is not the primary location of the
                  security mitigation. Show pseudocode only.
 
-  "direction"  — The step IS the security-critical implementation. It directly
+  "direction" - The step IS the security-critical implementation. It directly
                  and primarily carries out a mitigation named in the threat model
                  (e.g. "use parameterised queries", "hash with bcrypt", "validate
                  and sanitise input", "check permissions"). Never show code.
@@ -57,11 +57,11 @@ Assignment rules:
   is implemented, assign "direction".
 - A step that only sets up the environment for security work (e.g. opening a
   connection before running a parameterised query) is "full" or "partial",
-  not "direction" — the security work happens in the query step itself.
+  not "direction" - the security work happens in the query step itself.
 - When uncertain, assign one level stricter (e.g. prefer "pseudocode" over "partial").
 - Every step must get exactly one level.
 
-Respond with valid JSON only — no markdown, no explanation outside the JSON:
+Respond with valid JSON only: no markdown, no explanation outside the JSON:
 {
   "step_caps": [
     {
@@ -142,7 +142,7 @@ def classify_steps(plan: dict, threats: list[dict]) -> list[dict]:
         return result
 
     except Exception as exc:
-        print(f"[StepClassifier] Classification failed: {exc} — defaulting all to 'pseudocode'")
+        print(f"[StepClassifier] Classification failed: {exc} - defaulting all to 'pseudocode'")
         return [
             {"step_index": i, "max_level": "pseudocode", "reason": "classification failed"}
             for i in range(len(steps))
