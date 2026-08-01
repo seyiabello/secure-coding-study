@@ -93,7 +93,21 @@ async def run_planner(state: AgentState) -> dict:
     task       = state["task"]
     session_id = f"{state['participant_id']}_{state.get('task_id', 'unknown')}"
 
-    print(f"[Planner] Planning task: {task[:80]}...")
+    # Check whether this is a revision run (participant requested changes)
+    prior_decision = state.get("plan_decision") or {}
+    revision_notes = prior_decision.get("revised_content") or ""
+    is_revision    = prior_decision.get("action") == "revise"
+
+    if is_revision and revision_notes:
+        print(f"[Planner] Revising plan per participant feedback...")
+        user_message = (
+            f"Coding task: {task}\n\n"
+            f"The participant has reviewed the initial plan and requested revisions. "
+            f"Please produce an updated plan that addresses this feedback:\n{revision_notes}"
+        )
+    else:
+        print(f"[Planner] Planning task: {task[:80]}...")
+        user_message = f"Coding task: {task}"
 
     try:
         with propagate_attributes(
@@ -107,7 +121,7 @@ async def run_planner(state: AgentState) -> dict:
                 response_format={"type": "json_object"},
                 messages=[
                     {"role": "system", "content": SYSTEM_PROMPT},
-                    {"role": "user",   "content": f"Coding task: {task}"},
+                    {"role": "user",   "content": user_message},
                 ],
                 name="planner",
             )
@@ -129,6 +143,7 @@ async def run_planner(state: AgentState) -> dict:
 
         return {
             "plan":          plan,
+            "plan_decision": None,  # clear so conditional routing works after next interrupt
             "current_stage": "threat_modelling",
             "error":         None,
         }
@@ -140,6 +155,7 @@ async def run_planner(state: AgentState) -> dict:
         print(f"[Planner] ERROR: {error_msg}")
         return {
             "plan":          None,
+            "plan_decision": None,
             "current_stage": "error",
             "error":         error_msg,
         }

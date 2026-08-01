@@ -138,7 +138,13 @@ async def run_threat_modeller(state: AgentState) -> dict:
     task = state["task"]
     plan = state.get("plan") or {}
 
-    print(f"[Threat Modeller] Analysing task: {task[:80]}...")
+    # Check whether this is a revision run
+    prior_decision = state.get("threats_decision") or {}
+    revision_notes = prior_decision.get("revised_content") or ""
+    is_revision    = prior_decision.get("action") == "revise"
+
+    print(f"[Threat Modeller] Analysing task: {task[:80]}..."
+          + (" (revision)" if is_revision else ""))
 
     try:
         # ── Step 1: RAG retrieval ──────────────────────────────────────────────
@@ -186,6 +192,12 @@ async def run_threat_modeller(state: AgentState) -> dict:
             f"  - {r}" for r in plan.get("security_requirements", [])
         ) or "  None identified yet."
 
+        revision_section = (
+            f"\nThe participant reviewed the initial threat model and requested revisions. "
+            f"Please update the threat model addressing this feedback:\n{revision_notes}\n"
+            if is_revision and revision_notes else ""
+        )
+
         user_message = (
             f"Coding task: {task}\n\n"
             f"Plan scope: {plan.get('scope', 'N/A')}\n\n"
@@ -193,6 +205,7 @@ async def run_threat_modeller(state: AgentState) -> dict:
             f"{security_reqs}\n\n"
             f"{cwe_context}\n\n"
             f"{nvd_context}"
+            f"{revision_section}"
         )
 
         # ── Step 4: Generate threat model ──────────────────────────────────────
@@ -238,20 +251,22 @@ async def run_threat_modeller(state: AgentState) -> dict:
               f"{[t['cwe_id'] for t in threats]}")
 
         return {
-            "rag_context":   rag_results,
-            "threats":       threats,
-            "current_stage": "code_generation",
-            "error":         None,
+            "rag_context":     rag_results,
+            "threats":         threats,
+            "threats_decision": None,  # clear so conditional routing works after next interrupt
+            "current_stage":   "code_generation",
+            "error":           None,
         }
 
     except Exception as e:
         error_msg = f"Threat Modeller failed: {str(e)}"
         print(f"[Threat Modeller] ERROR: {error_msg}")
         return {
-            "rag_context":   None,
-            "threats":       None,
-            "current_stage": "error",
-            "error":         error_msg,
+            "rag_context":     None,
+            "threats":         None,
+            "threats_decision": None,
+            "current_stage":   "error",
+            "error":           error_msg,
         }
 
 

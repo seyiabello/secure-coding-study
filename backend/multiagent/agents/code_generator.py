@@ -175,6 +175,7 @@ Good example (for a "query the database" step):
 Rules:
 - Comment lines only. No executable Python.
 - Strictly scoped to this step. No code for other steps.
+- Maximum 6 to 8 comment lines. Skeleton only, not a tutorial.
 
 Respond with valid JSON only:
 {
@@ -193,12 +194,13 @@ Generate partial Python code for this step only:
   that are clearly not the security-critical part
 - OMIT with # TODO markers: any logic that touches security-sensitive areas,
   even if this step is "partial". The developer must write those parts.
-- Each TODO must state what is needed and reference the relevant CWE if applicable
+- Each TODO must be a single line stating what is needed and referencing the CWE if applicable
 
 TODO format:
     # TODO [CWE-XX]: brief description of what the developer must implement here
 
 Scope strictly to this step. Do not generate code for other steps.
+Keep the total response to 8 to 12 lines of code maximum.
 
 Respond with valid JSON only:
 {

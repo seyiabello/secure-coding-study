@@ -101,6 +101,16 @@ async def _finalise(state: AgentState) -> dict:
 
 # -- Build and compile graph ----------------------------------------------------
 
+def _route_after_planner(state: AgentState) -> str:
+    decision = state.get("plan_decision") or {}
+    return "planner" if decision.get("action") == "revise" else "threat_modeller"
+
+
+def _route_after_threat_modeller(state: AgentState) -> str:
+    decision = state.get("threats_decision") or {}
+    return "threat_modeller" if decision.get("action") == "revise" else "code_generator"
+
+
 def _build() -> StateGraph:
     builder = StateGraph(AgentState)
 
@@ -112,8 +122,16 @@ def _build() -> StateGraph:
     builder.add_node("finalise",        _finalise)
 
     builder.set_entry_point("planner")
-    builder.add_edge("planner",         "threat_modeller")
-    builder.add_edge("threat_modeller", "code_generator")
+    builder.add_conditional_edges(
+        "planner",
+        _route_after_planner,
+        {"planner": "planner", "threat_modeller": "threat_modeller"},
+    )
+    builder.add_conditional_edges(
+        "threat_modeller",
+        _route_after_threat_modeller,
+        {"threat_modeller": "threat_modeller", "code_generator": "code_generator"},
+    )
     builder.add_edge("code_generator",  "code_reviewer")
     builder.add_edge("code_reviewer",   "verifier")
     builder.add_edge("verifier",        "finalise")
