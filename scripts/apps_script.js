@@ -162,8 +162,12 @@ function onFormSubmit(e) {
   const registered = registerWithBackend(pid, condition)
 
   const props = PropertiesService.getScriptProperties()
-  const frontendUrl = props.getProperty("FRONTEND_URL").replace(/\/$/, "")
-  const studyLink = `${frontendUrl}/study?pid=${pid}&condition=${condition}`
+  const frontendUrl = props.getProperty("FRONTEND_URL")
+  if (!frontendUrl) {
+    Logger.log("ERROR: FRONTEND_URL not set in Script Properties")
+    return
+  }
+  const studyLink = `${frontendUrl.replace(/\/$/, "")}/study?pid=${pid}&condition=${condition}`
 
   if (!registered) {
     GmailApp.sendEmail(
