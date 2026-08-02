@@ -46,7 +46,7 @@ const PIS_SECTIONS = [
   },
   {
     heading: "Will I receive any payment for taking part?",
-    body: "Participation is voluntary and unpaid. No course credits, vouchers, or gifts are offered.",
+    body: "Please contact the researcher at ob509@exeter.ac.uk for details about any compensation arrangements.",
   },
   {
     heading: "What will happen to the results of this study?",
