@@ -165,6 +165,38 @@ async def log_consent(req: ConsentLogRequest):
     return {"ok": True}
 
 
+@router.get("/completions")
+def participant_completions(request: Request):
+    """
+    Returns the list of PIDs that have completed all 4 tasks.
+    Used by Apps Script to determine who is eligible for payment.
+    Requires X-Api-Key header if MONITORING_API_KEY is set.
+    """
+    api_key = os.environ.get("MONITORING_API_KEY", "")
+    if api_key and request.headers.get("x-api-key") != api_key:
+        raise HTTPException(status_code=401, detail="Unauthorised.")
+
+    participants = _load_participants()
+    baseline_counts   = Counter(r["participant_id"] for r in _read_jsonl(_BASELINE_LOG))
+    multiagent_counts = Counter(r["participant_id"] for r in _read_jsonl(_MULTIAGENT_LOG))
+
+    completions = []
+    for pid, condition in participants.items():
+        counts = baseline_counts if condition == "baseline" else multiagent_counts
+        tasks_done = counts.get(pid, 0)
+        if tasks_done >= TOTAL_TASKS:
+            completions.append({
+                "participant_id": pid,
+                "condition":      condition,
+                "tasks_completed": tasks_done,
+            })
+
+    return {
+        "total_completions": len(completions),
+        "completions":       completions,
+    }
+
+
 @router.get("/status")
 def study_status(request: Request):
     """Researcher monitoring endpoint — requires X-Api-Key header if MONITORING_API_KEY is set."""
