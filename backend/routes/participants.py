@@ -19,10 +19,11 @@ from models import ConsentLogRequest, ParticipantRegisterRequest
 
 router = APIRouter()
 
-_PARTICIPANTS_FILE = Path(__file__).resolve().parent.parent.parent / "data" / "participants.json"
-_CONSENT_LOG       = Path(__file__).resolve().parent.parent / "logs" / "consent_log.jsonl"
-_BASELINE_LOG      = Path(__file__).resolve().parent.parent / "logs" / "baseline_sessions.jsonl"
-_MULTIAGENT_LOG    = Path(__file__).resolve().parent.parent / "logs" / "multiagent_sessions.jsonl"
+_PARTICIPANTS_FILE  = Path(__file__).resolve().parent.parent.parent / "data" / "participants.json"
+_PAYMENT_EMAIL_FILE = Path(__file__).resolve().parent.parent.parent / "data" / "payment_emails.json"
+_CONSENT_LOG        = Path(__file__).resolve().parent.parent / "logs" / "consent_log.jsonl"
+_BASELINE_LOG       = Path(__file__).resolve().parent.parent / "logs" / "baseline_sessions.jsonl"
+_MULTIAGENT_LOG     = Path(__file__).resolve().parent.parent / "logs" / "multiagent_sessions.jsonl"
 
 TOTAL_TASKS = 4
 
@@ -46,6 +47,23 @@ def _save_participants(data: dict[str, str]) -> None:
         json.dump(data, f, indent=2)
         f.write("\n")
     os.replace(tmp, _PARTICIPANTS_FILE)
+
+
+def _load_payment_emails() -> dict[str, str]:
+    try:
+        with open(_PAYMENT_EMAIL_FILE) as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {}
+
+
+def _save_payment_emails(data: dict[str, str]) -> None:
+    _PAYMENT_EMAIL_FILE.parent.mkdir(parents=True, exist_ok=True)
+    tmp = _PAYMENT_EMAIL_FILE.with_suffix(".tmp")
+    with open(tmp, "w") as f:
+        json.dump(data, f, indent=2)
+        f.write("\n")
+    os.replace(tmp, _PAYMENT_EMAIL_FILE)
 
 
 def _read_jsonl(path: Path) -> list[dict]:
@@ -163,6 +181,34 @@ async def log_consent(req: ConsentLogRequest):
     except Exception:
         pass  # logging failure must never block a participant
     return {"ok": True}
+
+
+@router.post("/{pid}/payment-email")
+async def store_payment_email(pid: str, req: Request):
+    """Called by the frontend debrief page. Stores the participant's PayPal email."""
+    body = await req.json()
+    paypal_email = (body.get("paypal_email") or "").strip()
+
+    if not paypal_email or "@" not in paypal_email:
+        raise HTTPException(status_code=422, detail="Invalid PayPal email.")
+
+    participants = _load_participants()
+    if pid not in participants:
+        raise HTTPException(status_code=404, detail="Participant not found.")
+
+    emails = _load_payment_emails()
+    emails[pid] = paypal_email
+    _save_payment_emails(emails)
+    return {"ok": True}
+
+
+@router.get("/payment-emails")
+def list_payment_emails(request: Request):
+    """Returns all stored PayPal emails. Requires X-Api-Key if MONITORING_API_KEY is set."""
+    api_key = os.environ.get("MONITORING_API_KEY", "")
+    if api_key and request.headers.get("x-api-key") != api_key:
+        raise HTTPException(status_code=401, detail="Unauthorised.")
+    return _load_payment_emails()
 
 
 @router.get("/completions")

@@ -201,6 +201,17 @@ export async function reviseCode(
   return apiPost(`/session/${threadId}/revise`, { user_code: userCode });
 }
 
+/* ── Payment ─────────────────────────────────────────────────────────────── */
+
+export async function submitPaymentEmail(
+  participantId: string,
+  paypalEmail: string
+): Promise<{ ok: boolean }> {
+  return apiPost(`/participants/${encodeURIComponent(participantId)}/payment-email`, {
+    paypal_email: paypalEmail,
+  });
+}
+
 /* ── Participant management ──────────────────────────────────────────────── */
 
 export async function validateParticipant(pid: string): Promise<{

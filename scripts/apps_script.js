@@ -8,9 +8,8 @@
 //    FRONTEND_URL             = https://your-app.vercel.app
 //    PARTICIPANT_REGISTER_KEY = your-secret-key
 //    MONITORING_API_KEY       = your-monitoring-key
-//    TREMENDOUS_API_KEY       = your-tremendous-api-key
-//    TREMENDOUS_CAMPAIGN_ID   = your-campaign-id
-//    TREMENDOUS_FUNDING_ID    = your-funding-source-id
+//    PAYPAL_CLIENT_ID         = your-paypal-client-id
+//    PAYPAL_CLIENT_SECRET     = your-paypal-client-secret
 // 3. Click Run > Run function > authoriseScript once
 //    to grant Gmail and Sheets permissions
 // 4. Add trigger for form submissions:
@@ -20,16 +19,12 @@
 //    Triggers > Add Trigger > checkAndPay >
 //    Time-driven > Hour timer > Every hour
 //
-// TREMENDOUS SETUP
-// a. Sign up at tremendous.com
-// b. Settings > Funding Sources — add a credit card
-//    or bank account. Copy the Funding Source ID.
-// c. Campaigns > New Campaign — choose gift card
-//    types you want to offer (Amazon, PayPal, etc.)
-//    Set currency to GBP. Copy the Campaign ID from
-//    the URL after saving.
-// d. Settings > Developer > API Keys — create a key.
-//    Use testflight.tremendous.com for sandbox testing.
+// PAYPAL SETUP
+// a. Go to developer.paypal.com > Apps & Credentials
+// b. Create a Live app with Payouts enabled
+// c. Copy the Client ID and Secret into Script Properties
+// d. Make sure your PayPal Business account has enough
+//    balance (56 x £5 = £280) and Payouts is enabled
 // ====================================================
 
 const RESEARCHER_EMAIL = "ob509@exeter.ac.uk"
@@ -264,26 +259,31 @@ function onFormSubmit(e) {
 // Pays the first MAX_PAYMENTS participants who finish.
 // ====================================================
 
-const MAX_PAYMENTS   = 56
-const PAYMENT_GBP    = 5.00
-const TREMENDOUS_URL = "https://www.tremendous.com/api/v2/orders"
-// Switch to sandbox for testing:
-// const TREMENDOUS_URL = "https://testflight.tremendous.com/api/v2/orders"
+const MAX_PAYMENTS = 56
+const PAYMENT_GBP  = "5.00"
+const PAYPAL_TOKEN_URL  = "https://api-m.paypal.com/v1/oauth2/token"
+const PAYPAL_PAYOUT_URL = "https://api-m.paypal.com/v1/payments/payouts"
 
 function checkAndPay() {
-  const props          = PropertiesService.getScriptProperties()
-  const backendUrl     = props.getProperty("BACKEND_URL")
-  const monitoringKey  = props.getProperty("MONITORING_API_KEY")
-  const tremendousKey  = props.getProperty("TREMENDOUS_API_KEY")
-  const campaignId     = props.getProperty("TREMENDOUS_CAMPAIGN_ID")
-  const fundingId      = props.getProperty("TREMENDOUS_FUNDING_ID")
+  const props         = PropertiesService.getScriptProperties()
+  const backendUrl    = props.getProperty("BACKEND_URL")
+  const monitoringKey = props.getProperty("MONITORING_API_KEY")
+  const clientId      = props.getProperty("PAYPAL_CLIENT_ID")
+  const clientSecret  = props.getProperty("PAYPAL_CLIENT_SECRET")
 
-  if (!backendUrl || !tremendousKey || !campaignId || !fundingId) {
-    Logger.log("ERROR: Missing Script Properties. Need BACKEND_URL, TREMENDOUS_API_KEY, TREMENDOUS_CAMPAIGN_ID, TREMENDOUS_FUNDING_ID")
+  if (!backendUrl || !clientId || !clientSecret) {
+    Logger.log("ERROR: Missing Script Properties. Need BACKEND_URL, PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET")
     return
   }
 
-  // 1. Fetch completed PIDs from the backend
+  // 1. Get PayPal OAuth token (valid for ~9 hours, fetch once per run)
+  const token = _getPayPalToken(clientId, clientSecret)
+  if (!token) {
+    Logger.log("ERROR: Could not get PayPal access token. Check PAYPAL_CLIENT_ID / PAYPAL_CLIENT_SECRET.")
+    return
+  }
+
+  // 2. Fetch completed PIDs from backend
   let completedPids
   try {
     const fetchOpts = { method: "GET", muteHttpExceptions: true }
@@ -301,20 +301,35 @@ function checkAndPay() {
     return
   }
 
-  Logger.log(`Completed participants from backend: ${completedPids.size}`)
+  // 3. Fetch PayPal emails submitted by participants
+  let paypalEmails
+  try {
+    const fetchOpts = { method: "GET", muteHttpExceptions: true }
+    if (monitoringKey) fetchOpts.headers = { "x-api-key": monitoringKey }
+    const res = UrlFetchApp.fetch(`${backendUrl}/participants/payment-emails`, fetchOpts)
+    if (res.getResponseCode() !== 200) {
+      Logger.log(`ERROR: /participants/payment-emails returned HTTP ${res.getResponseCode()}`)
+      return
+    }
+    paypalEmails = JSON.parse(res.getContentText())  // { pid: paypal_email }
+  } catch (err) {
+    Logger.log(`ERROR: Failed to fetch payment emails: ${err}`)
+    return
+  }
 
-  // 2. Read the Sheet
-  const sheet    = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet()
-  const data     = sheet.getDataRange().getValues()
-  const headers  = data[0]
+  Logger.log(`Completed: ${completedPids.size} | PayPal emails received: ${Object.keys(paypalEmails).length}`)
+
+  // 4. Read the Sheet for names and payment tracking
+  const sheet   = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet()
+  const data    = sheet.getDataRange().getValues()
+  const headers = data[0]
 
   const pidCol      = headers.indexOf("Participant_id")
-  const emailCol    = headers.indexOf("What is your University of Exeter email address?  ")
   const nameCol     = headers.indexOf("What is your full name? ")
   const linkSentCol = headers.indexOf("link_sent")
 
-  if (pidCol === -1 || emailCol === -1 || nameCol === -1) {
-    Logger.log("ERROR: Required columns not found in Sheet")
+  if (pidCol === -1 || nameCol === -1) {
+    Logger.log("ERROR: Required Sheet columns not found (Participant_id / full name)")
     return
   }
 
@@ -326,98 +341,113 @@ function checkAndPay() {
     Logger.log("Created payment_sent column")
   }
 
-  // Count payments already sent so we can respect the cap
+  // Count payments already sent
   let paymentsSent = 0
   for (let i = 1; i < data.length; i++) {
     if (data[i][paymentSentCol] === "TRUE") paymentsSent++
   }
   Logger.log(`Payments sent so far: ${paymentsSent} / ${MAX_PAYMENTS}`)
 
-  // 3. Send payments for completed, unpaid participants
+  // 5. Send payments
   for (let i = 1; i < data.length; i++) {
     const row           = data[i]
     const pid           = row[pidCol]
-    const email         = row[emailCol]
     const name          = row[nameCol] || "Participant"
     const firstName     = name.split(" ")[0]
     const linkSent      = row[linkSentCol]
     const paymentStatus = row[paymentSentCol]
+    const paypalEmail   = paypalEmails[pid]
 
-    if (!pid || !email)              continue  // empty row
+    if (!pid)                        continue  // empty row
     if (linkSent !== "TRUE")         continue  // never registered
     if (paymentStatus === "TRUE")    continue  // already paid
-    if (paymentStatus === "FAILED")  continue  // failed previously — handle manually
+    if (paymentStatus === "FAILED")  continue  // failed — handle manually
     if (!completedPids.has(pid))     continue  // not finished yet
+    if (!paypalEmail)                continue  // participant hasn't submitted PayPal email yet
 
     if (paymentsSent >= MAX_PAYMENTS) {
       Logger.log(`Payment cap of ${MAX_PAYMENTS} reached. Stopping.`)
       break
     }
 
-    const success = _sendTremendousPayment(
-      email, firstName, pid,
-      tremendousKey, campaignId, fundingId
-    )
-
+    const success = _sendPayPalPayout(paypalEmail, firstName, pid, token)
     sheet.getRange(i + 1, paymentSentCol + 1).setValue(success ? "TRUE" : "FAILED")
 
     if (success) {
       paymentsSent++
-      Logger.log(`Payment sent: ${pid} → ${email}`)
+      Logger.log(`Payment sent: ${pid} → ${paypalEmail}`)
     } else {
-      Logger.log(`Payment FAILED: ${pid} → ${email} — check logs and retry manually`)
+      Logger.log(`Payment FAILED: ${pid} → ${paypalEmail} — check logs and retry manually`)
     }
 
-    Utilities.sleep(1000)  // avoid hammering Tremendous API
+    Utilities.sleep(500)
   }
 
   Logger.log(`checkAndPay complete. Total paid: ${paymentsSent}`)
 }
 
 
-function _sendTremendousPayment(email, firstName, pid, apiKey, campaignId, fundingId) {
+function _getPayPalToken(clientId, clientSecret) {
+  const credentials = Utilities.base64Encode(`${clientId}:${clientSecret}`)
+  try {
+    const res = UrlFetchApp.fetch(PAYPAL_TOKEN_URL, {
+      method:      "POST",
+      contentType: "application/x-www-form-urlencoded",
+      headers: {
+        "Authorization":   `Basic ${credentials}`,
+        "Accept":          "application/json",
+        "Accept-Language": "en_US",
+      },
+      payload:            "grant_type=client_credentials",
+      muteHttpExceptions: true,
+    })
+    if (res.getResponseCode() !== 200) {
+      Logger.log(`PayPal token error: HTTP ${res.getResponseCode()} — ${res.getContentText()}`)
+      return null
+    }
+    return JSON.parse(res.getContentText()).access_token
+  } catch (err) {
+    Logger.log(`PayPal token exception: ${err}`)
+    return null
+  }
+}
+
+
+function _sendPayPalPayout(paypalEmail, firstName, pid, token) {
   const payload = {
-    payment: {
-      funding_source_id: fundingId
+    sender_batch_header: {
+      sender_batch_id: `scs_${pid}_${Date.now()}`,
+      email_subject:   "Your AI Coding Study payment",
+      email_message:   `Hi ${firstName}, thank you for completing the study. Here is your £5 payment.`,
     },
-    rewards: [
+    items: [
       {
-        value: {
-          denomination:  PAYMENT_GBP,
-          currency_code: "GBP"
-        },
-        campaign_id: campaignId,
-        recipient: {
-          name:  firstName,
-          email: email
-        },
-        delivery: {
-          method: "EMAIL"
-        }
-      }
-    ]
+        recipient_type: "EMAIL",
+        amount:         { value: PAYMENT_GBP, currency: "GBP" },
+        receiver:       paypalEmail,
+        sender_item_id: pid,
+        note:           "Thank you for participating in the AI Coding Research Study.",
+      },
+    ],
   }
 
   try {
-    const res = UrlFetchApp.fetch(TREMENDOUS_URL, {
-      method:          "POST",
-      contentType:     "application/json",
+    const res = UrlFetchApp.fetch(PAYPAL_PAYOUT_URL, {
+      method:             "POST",
+      contentType:        "application/json",
       headers: {
-        "Authorization": `Bearer ${apiKey}`,
-        "Accept":        "application/json"
+        "Authorization": `Bearer ${token}`,
+        "Accept":        "application/json",
       },
-      payload:          JSON.stringify(payload),
-      muteHttpExceptions: true
+      payload:            JSON.stringify(payload),
+      muteHttpExceptions: true,
     })
-
     const code = res.getResponseCode()
-    if (code === 200 || code === 201) {
-      return true
-    }
-    Logger.log(`Tremendous error for ${pid}: HTTP ${code} — ${res.getContentText()}`)
+    if (code === 201) return true
+    Logger.log(`PayPal payout error for ${pid}: HTTP ${code} — ${res.getContentText()}`)
     return false
   } catch (err) {
-    Logger.log(`Tremendous exception for ${pid}: ${err}`)
+    Logger.log(`PayPal payout exception for ${pid}: ${err}`)
     return false
   }
 }
